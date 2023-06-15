@@ -1,8 +1,15 @@
 # RandPassGenerator
-RandPassGenerator 1.3.3
+RandPassGenerator 1.3.4
 
 The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. 
 
+## Acknowledgements
+
+<img src='https://resources.jetbrains.com/storage/products/company/brand/logos/IntelliJ_IDEA_icon.png' width="10%" height="10%" align="right"/>
+
+> IntelliJ IDEA is a really amazing tool that made my development several times more efficient.
+
+Thanks to [JetBrains](https://www.jetbrains.com/?from=sfc9982) for providing the [IntelliJ IDEA](https://www.jetbrains.com/idea/?from=sfc9982) open source license for this project.
 
 ### Build Information
 
