@@ -177,6 +177,7 @@ public class WordSet {
 		// rlimit is used to eliminate the slight bias in random
 		// selection that would occur if we just used straight random
 		// integers
+		assert cnt != 0 : "cnt can't be zero before this division";
 		rlimit = (Integer.MAX_VALUE / cnt) * cnt;
 
 		return cnt;
@@ -200,9 +201,7 @@ public class WordSet {
 	 */
 	public double bitsPerItem() {
 		double size = size();
-		double ret = Math.log(size) / LOG2;
-
-		return ret;
+		return Math.log(size) / LOG2;
 	}
 
 	/**
