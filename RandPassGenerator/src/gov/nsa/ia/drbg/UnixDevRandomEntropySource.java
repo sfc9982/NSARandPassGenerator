@@ -3,6 +3,7 @@ package gov.nsa.ia.drbg;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import gov.nsa.ia.util.Log;
@@ -112,6 +113,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 			try {
 				rinput.close();
 			} catch (IOException e) {
+				debug.log(Level.WARNING, "Dispose failed on: " + e);
 			}
 		rinput = null;
 		passedSelfTest = false;
@@ -252,7 +254,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 	@Override
 	public byte[] getSelfTestEntropy() {
 		if (passedSelfTest && savedSelfTestEntropy != null) {
-			byte copy[];
+			byte[] copy;
 			copy = new byte[savedSelfTestEntropy.length];
 			System.arraycopy(savedSelfTestEntropy, 0, copy, 0, copy.length);
 			return copy;
@@ -260,7 +262,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 			return null;
 	}
 
-	private static final int TEST_SIZES[] = { 128, 256, 384, 512 };
+	private static final int[] TEST_SIZES = { 128, 256, 384, 512 };
 
 	/**
 	 * Simple unit test main method, simply creates an instance and calls

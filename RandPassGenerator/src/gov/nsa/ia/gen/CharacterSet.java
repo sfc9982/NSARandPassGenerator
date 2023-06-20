@@ -69,7 +69,7 @@ public class CharacterSet {
 	private Logger logger;
 
 	// the buffer of random shorts read from the DRBG, with index
-	private short shortbuf[];
+	private short[] shortbuf;
 	private int shortbufIndex;
 
 	/**
@@ -206,8 +206,7 @@ public class CharacterSet {
 	 */
 	public double bitsPerItem() {
 		double size = charset.length;
-		double ret = Math.log(size) / LOG2;
-		return ret;
+		return Math.log(size) / LOG2;
 	}
 
 	/**
@@ -257,7 +256,7 @@ public class CharacterSet {
 	private int fillShortBuf(AbstractDRBG drbg) {
 		int status;
 		int bytesNeeded;
-		byte bytes[];
+		byte[] bytes;
 
 		bytesNeeded = BUFFER_FILL_SIZE * 2;
 		bytes = new byte[bytesNeeded];

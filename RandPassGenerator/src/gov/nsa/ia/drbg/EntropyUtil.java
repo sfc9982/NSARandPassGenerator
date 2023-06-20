@@ -42,7 +42,7 @@ public class EntropyUtil {
 		mask = count - 1;
 		int[] buckets;
 		buckets = new int[count];
-		double p[];
+		double[] p;
 
 		if (len == 0)
 			len = buf.length;
@@ -77,7 +77,7 @@ public class EntropyUtil {
 		mask = count - 1;
 		int[] buckets;
 		buckets = new int[count];
-		double p[];
+		double[] p;
 
 		if (len == 0)
 			len = buf.length;
@@ -134,7 +134,7 @@ public class EntropyUtil {
 		BigInteger bx = new BigInteger(buf);
 
 		// create some bins and expected count per bin for uniform distro
-		double realCounts[];
+		double[] realCounts;
 		double expectedCount;
 		int numcounts;
 		numcounts = (1 << chunkBits);
@@ -174,7 +174,7 @@ public class EntropyUtil {
 	 * Chi-squared max values for 5% likelihood that the distro really is uniform,
 	 * for various bit chunk sizes up to 16.
 	 */
-	static final double CHISQ_MAX_VALUES[] = { 0.0, 0.0, // sample bits 0 and 1, invalid
+	static final double[] CHISQ_MAX_VALUES = { 0.0, 0.0, // sample bits 0 and 1, invalid
 			5.99, 7.82, 9.49, 11.1, 12.6, 14.1, 15.5, 16.9, 18.3, 19.7, 21.0, 22.4, 23.7, 25.0, 26.3 };
 
 	/**
@@ -209,7 +209,7 @@ public class EntropyUtil {
 		return Math.log(x) / LOG2;
 	}
 
-	private static char nib[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+	private static char[] nib = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 	/**
 	 * Byte buf to String utility, for displaying buffers to humans.
@@ -265,7 +265,7 @@ public class EntropyUtil {
 	 *
 	 * @param args ignored, for now
 	 */
-	public static void main(String args[]) {
+	public static void main(String[] args) {
 		byte[] buf;
 
 		buf = new byte[256];

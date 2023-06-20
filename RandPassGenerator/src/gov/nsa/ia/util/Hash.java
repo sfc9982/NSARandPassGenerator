@@ -369,7 +369,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 					+ bufferToString(output));
 		} else {
 			try {
-				Hash hx[] = new Hash[SIZE_VALUES.length];
+				Hash[] hx = new Hash[SIZE_VALUES.length];
 
 				int i;
 				for (i = 0; i < SIZE_VALUES.length; i++) {
@@ -378,7 +378,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 
 				try (FileInputStream fis = new FileInputStream(args[0])) {
 					int cc;
-					byte buf[] = new byte[2048];
+					byte[] buf = new byte[2048];
 					for (cc = fis.read(buf); cc > 0; cc = fis.read(buf)) {
 						for (i = 0; i < hx.length; i++) {
 							if (hx[i].update(buf, 0, cc) != STATUS_SUCCESS) {

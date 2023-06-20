@@ -985,7 +985,7 @@ public class HashDRBG extends AbstractDRBG {
 			chisq = EntropyUtil.chiSquaredStatistic(output, output.length, 4);
 			debug.info("Chi-squared statistic for 4 bit chunks = " + chisq);
 
-			int intbuf[];
+			int[] intbuf;
 			int ibx, ibxlim;
 			ibxlim = 30000;
 			intbuf = new int[ibxlim];

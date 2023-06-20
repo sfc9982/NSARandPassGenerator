@@ -48,7 +48,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 	/**
 	 * Sources list
 	 */
-	private SecureRandom sources[];
+	private SecureRandom[] sources;
 
 	/**
 	 * Entropy gathered during self-test
@@ -233,7 +233,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 	@Override
 	public byte[] getSelfTestEntropy() {
 		if (passedSelfTest && savedSelfTestEntropy != null) {
-			byte copy[];
+			byte[] copy;
 			copy = new byte[savedSelfTestEntropy.length];
 			System.arraycopy(savedSelfTestEntropy, 0, copy, 0, copy.length);
 			return copy;
@@ -241,7 +241,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 			return null;
 	}
 
-	private static final int TEST_SIZES[] = { 128, 384 };
+	private static final int[] TEST_SIZES = { 128, 384 };
 
 	/**
 	 * Simple unit test main method, simply creates an instance and calls

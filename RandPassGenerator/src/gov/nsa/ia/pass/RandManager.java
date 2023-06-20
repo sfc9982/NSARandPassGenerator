@@ -413,7 +413,7 @@ public class RandManager implements SelfTestable {
 		return ret;
 	}
 
-	private static final int SELF_TEST_SIZES[] = { 16, 32 };
+	private static final int[] SELF_TEST_SIZES = { 16, 32 };
 
 	/**
 	 * Perform a basic Known Answer test of our underlying DRBG. This calls the
@@ -424,8 +424,7 @@ public class RandManager implements SelfTestable {
 	 * @return true if HashDRBG known answer self-test passed
 	 */
 	public boolean performDRBGKATest() {
-		boolean result = HashDRBG.performKnownAnswerTests(getLogger());
-		return result;
+		return HashDRBG.performKnownAnswerTests(getLogger());
 	}
 
 	/**
