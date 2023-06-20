@@ -13,7 +13,7 @@ import gov.nsa.ia.drbg.DRBGConstants;
  * object, and provides the ability to hash a value represented in several ways.
  * It also provides the Hash_df function from SP800-90 section 10.4.1. This
  * class also implements a self-test method.
- * 
+ *
  * @author nziring
  */
 public class Hash implements DRBGConstants, SelfTestable {
@@ -44,7 +44,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 
 	/**
 	 * Create an instance of the Hash class using the default bit strength.
-	 * 
+	 *
 	 * @throws RuntimeException if algorithm not available
 	 */
 	public Hash() {
@@ -170,7 +170,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 	 * implementation, the output length must be a multiple of 8, because we return
 	 * a byte array. Note that this method always resets the Hash object before
 	 * beginning the Hash_df algorithm, so any intermediate hash state will be gone!
-	 * 
+	 *
 	 * @param input         input data to be hashed
 	 * @param reqOutputBits desired output bits
 	 * @param output        output byte array, large enough to hold reqOutputBits
@@ -178,7 +178,8 @@ public class Hash implements DRBGConstants, SelfTestable {
 	 */
 	public int hash_df(byte[] input, int reqOutputBits, byte[] output) {
 		byte[] temp;
-		int outlen, len;
+		int outlen;
+		int len;
 		byte counter;
 		int status;
 
@@ -372,9 +373,6 @@ public class Hash implements DRBGConstants, SelfTestable {
 					+ bufferToString(output));
 		} else {
 			try {
-				FileInputStream fis;
-				fis = new FileInputStream(args[0]);
-
 				Hash hx[] = new Hash[SIZE_VALUES.length];
 
 				int i;
@@ -382,18 +380,20 @@ public class Hash implements DRBGConstants, SelfTestable {
 					hx[i] = new Hash(SIZE_VALUES[i]);
 				}
 
-				int cc;
-				byte buf[] = new byte[2048];
-				for (cc = fis.read(buf); cc > 0; cc = fis.read(buf)) {
-					for (i = 0; i < hx.length; i++) {
-						if (hx[i].update(buf, 0, cc) != STATUS_SUCCESS) {
-							fis.close();
-							System.err.println("Error updating " + ALGORITHM_VALUES[i] + " hash.");
-							System.exit(0);
+				try (FileInputStream fis = new FileInputStream(args[0])) {
+					int cc;
+					byte buf[] = new byte[2048];
+					for (cc = fis.read(buf); cc > 0; cc = fis.read(buf)) {
+						for (i = 0; i < hx.length; i++) {
+							if (hx[i].update(buf, 0, cc) != STATUS_SUCCESS) {
+								fis.close();
+								System.err.println("Error updating " + ALGORITHM_VALUES[i] + " hash.");
+								System.exit(0);
+							}
 						}
 					}
+					fis.close();
 				}
-				fis.close();
 
 				byte[] result;
 				for (i = 0; i < hx.length; i++) {
@@ -439,14 +439,14 @@ public class Hash implements DRBGConstants, SelfTestable {
 		return ret;
 	}
 
-	private static char nib[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+	private static char[] nib = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 	private static String bufferToString(byte[] b) {
 		StringBuilder sb = new StringBuilder(b.length * 2);
 		int i;
 		for (i = 0; i < b.length; i++) {
-			sb.append(nib[(((int) b[i]) & 0x0f0) >> 4]);
-			sb.append(nib[(((int) b[i]) & 0x0f)]);
+			sb.append(nib[((b[i]) & 0x0f0) >> 4]);
+			sb.append(nib[((b[i]) & 0x0f)]);
 		}
 		return sb.toString();
 	}
