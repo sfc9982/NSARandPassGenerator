@@ -1,5 +1,6 @@
 package gov.nsa.ia.util;
 
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
@@ -94,8 +95,9 @@ public class OptionManager {
 		Option o;
 		String n;
 
-		for (String opt : optmap.keySet()) {
-			n = optmap.get(opt);
+		for (Map.Entry<String, String> entry : optmap.entrySet()) {
+			String opt = entry.getKey();
+			n = entry.getValue();
 			o = map.get(n);
 			sb.append(opt);
 			sb.append("\t");
@@ -128,10 +130,8 @@ public class OptionManager {
 		if (val == null) {
 			Option o;
 			o = map.get(name);
-			if (o != null) {
-				if (o.defaultValue != null) {
-					val = o.defaultValue;
-				}
+			if (o != null && o.defaultValue != null) {
+				val = o.defaultValue;
 			}
 		}
 
