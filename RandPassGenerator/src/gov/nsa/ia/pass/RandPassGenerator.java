@@ -128,7 +128,7 @@ public class RandPassGenerator {
 	/**
 	 * Initialize this RandPassGenerator using the supplied log file and the
 	 * supplied entropy startup file.
-	 * 
+	 *
 	 * @param logfile Path to a writeable log file, null to log to stderr
 	 * @param pw      A usable printwriter for output, may not be null
 	 * @param verbose if true, print verbose messages
@@ -326,7 +326,7 @@ public class RandPassGenerator {
 	 * specify a character set, the supplied string is examined, a lowercase letter
 	 * in the string causes the password to have lowercase letters, uppercase letter
 	 * adds uppercase, digit adds digits, anything else adds basic punctutation.
-	 * 
+	 *
 	 * If the charsetfile argument is supplied, then it is read and used to create
 	 * the custom charset. Note that charsets and charsetfile should not both be
 	 * supplied, but if they are then charsetfile takes precedence.
@@ -438,7 +438,7 @@ public class RandPassGenerator {
 	/**
 	 * Generate some usernames from specified prefix set, or the default character
 	 * set with a 4-digits suffix. All usernames will be output to stdout.
-	 * 
+	 *
 	 * @param count        how many usernames to generate, positive
 	 * @param prefixlist   URL to the prefixlist to use, or null for default
 	 * @param maxPrefixLen maximum length of a word to use in the username, <3 means
@@ -722,7 +722,7 @@ public class RandPassGenerator {
 	 * TODO: this encryption functionality is seriously crufty and needs a rewrite.
 	 * Original version read a password with no display, once, so user couldn't see
 	 * it!
-	 * 
+	 *
 	 * Key File Encryption Prompt. Encrypts generated key to a file using a password
 	 * types by the user on system console.
 	 *
@@ -745,7 +745,7 @@ public class RandPassGenerator {
 	 *
 	 * TODO: the encrypt/decrypt functionality is seriously crufty and needs a
 	 * rewrite.
-	 * 
+	 *
 	 * Key File Decryption Prompt. Decrypts user provided file using user provided
 	 * password
 	 *
@@ -772,10 +772,10 @@ public class RandPassGenerator {
 
 	/**
 	 * Generate a list of Key IDs, given a list of key hashes.
-	 * 
+	 *
 	 * Generates KeyID of key using first 64-bits of Hash and current date
 	 * (YYYYMMDD_hhmmssH1H2H3H4H5H6H7H8H9H10H11H12H13H14H15H16).
-	 * 
+	 *
 	 * @param hkeys an ArrayList of hashes of keys
 	 * @return an ArrayList of IDs
 	 */
@@ -842,7 +842,7 @@ public class RandPassGenerator {
 	 * Main method for the RandPassGenerator application - this method processes the
 	 * command-line args, then initializes the RandPassGenerator and the
 	 * RandManager, then generates the requested values.
-	 * 
+	 *
 	 * This method uses
 	 */
 	public static void main(String[] args) {
