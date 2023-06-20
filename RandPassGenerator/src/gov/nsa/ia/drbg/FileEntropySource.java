@@ -130,7 +130,6 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	@Override
 	public byte[] getEntropy(int requestedEntropyBits, int minOutputBytes, int maxOutputBytes) {
 		ByteArrayOutputStream baos;
-		BufferedInputStream bis;
 		byte[] buf;
 		int blocks, total, tc, cc;
 		blocks = ((int) Math.ceil(requestedEntropyBits / (double) entropyBitsPerBlock));
@@ -140,13 +139,11 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 			total = minOutputBytes;
 		baos = new ByteArrayOutputStream(blocks * blockSize);
 		tc = 0;
-		bis = null;
 
 		if (minOutputBytes < (requestedEntropyBits / 8))
-			return null;
+			return new byte[0];
 
-		try {
-			bis = new BufferedInputStream(new FileInputStream(source));
+		try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(source))) {
 			for (tc = 0; tc < total; tc += cc) {
 				cc = bis.read(buf);
 				if (cc > 0)
@@ -155,13 +152,9 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 					break;
 			}
 		} catch (IOException ie1) {
+			debug.info("IO error on saving entropy: " + ie1);
+			ie1.printStackTrace();
 		}
-		if (bis != null)
-			try {
-				bis.close();
-			} catch (IOException ie2) {
-			}
-
 		if (tc < minOutputBytes) {
 			return null;
 		} else {
@@ -222,20 +215,15 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 		randbuf = new byte[total];
 		status = rbg.generate(total, rbg.getStrength(), false, null, randbuf);
 		if (status == DRBGConstants.STATUS_SUCCESS) {
-			FileOutputStream fos = null;
-			fos = new FileOutputStream(destination);
-			if (fos != null)
-				try {
-					BufferedOutputStream bos = new BufferedOutputStream(fos);
+			try (FileOutputStream fos = new FileOutputStream(destination)) {
+				try (BufferedOutputStream bos = new BufferedOutputStream(fos)) {
 					bos.write(randbuf);
-					bos.close();
 					ret = true;
-				} finally {
-					try {
-						fos.close();
-					} catch (IOException ie3) {
-					}
 				}
+			} catch (IOException ie2) {
+				debug.info("IO error on saving entropy: " + ie2);
+				ie2.printStackTrace();
+			}
 		} else {
 			debug.info("DRBG generate called failed, cannot save.");
 		}
@@ -372,9 +360,9 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 				result = false;
 				try {
 					result = src.saveEntropy(rbg, 200);
-				} catch (IOException ie4) {
-					debug.info("IO error on saving entropy: " + ie4);
-					ie4.printStackTrace();
+				} catch (IOException ie3) {
+					debug.info("IO error on saving entropy: " + ie3);
+					ie3.printStackTrace();
 				}
 				if (result) {
 					debug.info("done, saved 200 blocks to " + args[i]);
