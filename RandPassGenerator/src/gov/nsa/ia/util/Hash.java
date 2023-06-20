@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Logger;
 
 import gov.nsa.ia.drbg.DRBGConstants;
 
@@ -17,6 +18,8 @@ import gov.nsa.ia.drbg.DRBGConstants;
  * @author nziring
  */
 public class Hash implements DRBGConstants, SelfTestable {
+	private static final Logger debug = Log.getLogger(Hash.class.getName());
+
 	private MessageDigest md;
 
 	private int outputBytes;
@@ -277,14 +280,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 				return false;
 			}
 			result = new byte[h.getDigestSize()];
-			if (h.getDigest(result) != STATUS_SUCCESS) {
-				return false;
-			}
-			if (!java.util.Arrays.equals(result, test_outputs[i])) {
-				return false;
-			}
-
-			if (h.reset() != STATUS_SUCCESS) {
+			if ((h.getDigest(result) != STATUS_SUCCESS) || !java.util.Arrays.equals(result, test_outputs[i]) || (h.reset() != STATUS_SUCCESS)) {
 				return false;
 			}
 
@@ -315,9 +311,9 @@ public class Hash implements DRBGConstants, SelfTestable {
 	public static void main(String[] args) {
 		if (args.length == 0) {
 			Hash h = new Hash();
-			System.err.println("Performing self-test, please wait.");
+			debug.info("Performing self-test, please wait.");
 			boolean pass = h.performSelfTest();
-			System.err.println("Self test finished, pass=" + pass);
+			debug.info("Self test finished, pass=" + pass);
 
 			h = new Hash(DEFAULT_SIZE);
 			byte[] output;
@@ -330,9 +326,9 @@ public class Hash implements DRBGConstants, SelfTestable {
 			if (h.hash_df(input, len, output) == STATUS_SUCCESS) {
 				// need to get test vectors for this and move it into
 				// performSelfTest()
-				System.err.println("Hash_df function test succeeded.");
+				debug.info("Hash_df function test succeeded.");
 			} else {
-				System.err.println("Hash_df function test failed.");
+				debug.info("Hash_df function test failed.");
 			}
 			return;
 		} else if (args.length == 2) {
@@ -340,8 +336,8 @@ public class Hash implements DRBGConstants, SelfTestable {
 			try {
 				siz = Integer.parseInt(args[0]);
 			} catch (NumberFormatException nfe) {
-				System.err.println("Bad size for 2-arg version of this test main");
-				System.err.println("Usage: java Hash size hexstring   (size usually 256 or 384)");
+				debug.info("Bad size for 2-arg version of this test main");
+				debug.info("Usage: java Hash size hexstring   (size usually 256 or 384)");
 				System.exit(1);
 			}
 			BigInteger v;
@@ -352,24 +348,24 @@ public class Hash implements DRBGConstants, SelfTestable {
 			int status;
 			status = hx.reset();
 			if (status != STATUS_SUCCESS) {
-				System.err.println("Hash reset failed.");
+				debug.info("Hash reset failed.");
 				System.exit(2);
 			}
 			byte[] databuf = pbi2ba(v);
 			status = hx.update(databuf);
 			if (status != STATUS_SUCCESS) {
-				System.err.println("Hash update failed.");
+				debug.info("Hash update failed.");
 				System.exit(2);
 			}
 
 			byte[] output = new byte[hx.getDigestSize()];
 			status = hx.getDigest(output);
 			if (status != STATUS_SUCCESS) {
-				System.err.println("Hash getDigest failed.");
+				debug.info("Hash getDigest failed.");
 				System.exit(2);
 			}
 
-			System.err.println("For size " + siz + " and input " + bufferToString(databuf) + " output digest is "
+			debug.info("For size " + siz + " and input " + bufferToString(databuf) + " output digest is "
 					+ bufferToString(output));
 		} else {
 			try {
@@ -387,7 +383,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 						for (i = 0; i < hx.length; i++) {
 							if (hx[i].update(buf, 0, cc) != STATUS_SUCCESS) {
 								fis.close();
-								System.err.println("Error updating " + ALGORITHM_VALUES[i] + " hash.");
+								debug.info("Error updating " + ALGORITHM_VALUES[i] + " hash.");
 								System.exit(0);
 							}
 						}
@@ -399,19 +395,19 @@ public class Hash implements DRBGConstants, SelfTestable {
 				for (i = 0; i < hx.length; i++) {
 					result = new byte[hx[i].getDigestSize()];
 					if (hx[i].getDigest(result) != STATUS_SUCCESS) {
-						System.err.println("Error getting output from " + ALGORITHM_VALUES[i] + " hash.");
+						debug.info("Error getting output from " + ALGORITHM_VALUES[i] + " hash.");
 						System.exit(0);
 					}
 					int b;
-					System.err.println("Digest of file " + args[0] + " using " + ALGORITHM_VALUES[i] + " hash is: ");
+					debug.info("Digest of file " + args[0] + " using " + ALGORITHM_VALUES[i] + " hash is: ");
 					for (b = 0; b < result.length; b++) {
-						System.err.print(" " + Integer.toString((int) result[b] & 0x00ff, 16));
+						debug.info(" " + Integer.toString(result[b] & 0x00ff, 16));
 					}
-					System.err.println(".");
+					debug.info(".");
 				}
 
 			} catch (IOException e) {
-				System.err.println("IO Error in file test: " + e);
+				debug.info("IO Error in file test: " + e);
 				e.printStackTrace();
 			}
 

@@ -2,7 +2,9 @@ package gov.nsa.ia.drbg;
 
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
+import java.util.logging.Logger;
 
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.SelfTestable;
 
 /**
@@ -22,6 +24,7 @@ import gov.nsa.ia.util.SelfTestable;
  */
 
 public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
+	private static final Logger debug = Log.getLogger(JavaSecRandEntropySource.class.getName());
 
 	/**
 	 * How many separate SecureRandom instances to use.
@@ -80,6 +83,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 	/**
 	 * Return a string representation of this source, for debugging and logging.
 	 */
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
@@ -98,6 +102,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 	 * Dispose of this entropy source, if we are done with it. After this has been
 	 * called, all attempts to get entropy will fail.
 	 */
+	@Override
 	public void dispose() {
 		sources = null;
 		passedSelfTest = false;
@@ -114,15 +119,16 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 	 * cannot be delivered within the size limit imposed by maxOutputBytes, then
 	 * STATUS_ERROR is returned. If the dispose() method has been called on this
 	 * EntropySource object, then this method always returns null.
-	 * 
+	 *
 	 * @param requestedEntropy amount of entropy needed, in bits
 	 * @param minOutputBytes   minimum amount of output caller will accept, in
 	 *                         bytes, usually reqEntropy/8
 	 * @param maxOutputBytes   maximum amount of output caller will accept, 0 for
 	 *                         unlimited
-	 * 
+	 *
 	 * @return byte array containing entropy (STATUS_SUCCESS) or null (STATUS_ERROR)
 	 */
+	@Override
 	public byte[] getEntropy(int requestedEntropyBits, int minOutputBytes, int maxOutputBytes) {
 		byte[] ret;
 		int blocks, tot, bytes;
@@ -194,6 +200,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 	 *
 	 * @return true on success, false on failure
 	 */
+	@Override
 	public boolean performSelfTest() {
 		byte[] ret;
 
@@ -204,10 +211,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 
 		// case 2 - should return a byte array of two blocks
 		ret = getEntropy(128, BLOCK_SIZE, BLOCK_SIZE * 2);
-		if (ret.length != BLOCK_SIZE) {
-			return false;
-		}
-		if (!EntropyUtil.checkByteEntropy(ret, ret.length, 3.5)) {
+		if ((ret.length != BLOCK_SIZE) || !EntropyUtil.checkByteEntropy(ret, ret.length, 3.5)) {
 			return false;
 		}
 
@@ -223,9 +227,10 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 	 * EntropyUtil.checkByteEntropy that its entropy is at least 4 bits per byte. If
 	 * performSelfTest has not been called, or if the self-test failed, or if
 	 * dispose has been called, then this method will return null.
-	 * 
+	 *
 	 * @return byte array containing entropy from self-test, or null
 	 */
+	@Override
 	public byte[] getSelfTestEntropy() {
 		if (passedSelfTest && savedSelfTestEntropy != null) {
 			byte copy[];
@@ -250,21 +255,21 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 		double h;
 
 		if (args.length > 0) {
-			System.err.println("Non-empty list of command-line args supplied.");
-			System.err.println("Setting up additional self-test.");
+			debug.info("Non-empty list of command-line args supplied.");
+			debug.info("Setting up additional self-test.");
 		}
 
 		try {
-			System.err.println("About to call self-test method.");
+			debug.info("About to call self-test method.");
 			rsrc = new JavaSecRandEntropySource();
 			if (rsrc.performSelfTest()) {
-				System.err.println("Self-Test Passed!");
+				debug.info("Self-Test Passed!");
 			} else {
-				System.err.println("Self-test failed.");
+				debug.info("Self-test failed.");
 				System.exit(1);
 			}
 		} catch (Exception ie2) {
-			System.err.println("Error creating random source: " + ie2);
+			debug.info("Error creating random source: " + ie2);
 			ie2.printStackTrace();
 		}
 
@@ -272,13 +277,13 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 			rsrc = new JavaSecRandEntropySource();
 			for (i = 0; i < TEST_SIZES.length; i++) {
 				output = rsrc.getEntropy(TEST_SIZES[i], TEST_SIZES[i] / 8, 0);
-				System.err.println("Test at size " + TEST_SIZES[i] + " returns array of " + output.length + " bytes.");
+				debug.info("Test at size " + TEST_SIZES[i] + " returns array of " + output.length + " bytes.");
 				h = EntropyUtil.computeByteEntropy(output, output.length);
-				System.err.println("    byte entropy = " + h + " bits");
+				debug.info("    byte entropy = " + h + " bits");
 			}
 			rsrc.dispose();
 		} catch (Exception ie) {
-			System.err.println("Error creating random source: " + ie);
+			debug.info("Error creating random source: " + ie);
 			ie.printStackTrace();
 		}
 

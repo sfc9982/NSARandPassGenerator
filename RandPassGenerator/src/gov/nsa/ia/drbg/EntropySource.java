@@ -6,7 +6,7 @@ import gov.nsa.ia.util.SelfTestable;
  * This interface declares the methods needed to support the Get_entropy_input
  * function of SP800-90. Implementations of this interface must deliver entropy
  * upon request, though a request may block until enough entropy is available.
- * 
+ *
  */
 public interface EntropySource extends SelfTestable {
 	/**
@@ -14,13 +14,13 @@ public interface EntropySource extends SelfTestable {
 	 * OutputStream. Implementations may block until entropy is available. If the
 	 * entropy cannot be delivered at all, then the implementation must return null
 	 * (which means STATUS_ERROR).
-	 * 
+	 *
 	 * @param requestedEntropy amount of entropy needed, in bits
 	 * @param minOutputBytes   minimum amount of output caller will accept, in
 	 *                         bytes, usually reqEntropy/8
 	 * @param maxOutputBytes   maximum amount of output caller will accept, 0 for
 	 *                         unlimited
-	 * 
+	 *
 	 * @return byte array containing entropy (STATUS_SUCCESS) or null (STATUS_ERROR)
 	 */
 	public byte[] getEntropy(int requestedEntropyBits, int minOutputBytes, int maxOutputBytes);
@@ -34,7 +34,7 @@ public interface EntropySource extends SelfTestable {
 	 * performed. Implementations need make no guarantees about the size or quality
 	 * of the entropy returned from this method, except that it was part of a
 	 * successful self-test.
-	 * 
+	 *
 	 * @return byte array containing entropy gathered during self-test, or null
 	 */
 	public byte[] getSelfTestEntropy();

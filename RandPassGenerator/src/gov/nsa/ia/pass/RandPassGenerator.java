@@ -27,6 +27,7 @@ import gov.nsa.ia.gen.HexKeyGen;
 import gov.nsa.ia.gen.WordSet;
 import gov.nsa.ia.util.KeyUnwrapper;
 import gov.nsa.ia.util.KeyWrapper;
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.OptionManager;
 
 /**
@@ -46,6 +47,11 @@ import gov.nsa.ia.util.OptionManager;
  */
 
 public class RandPassGenerator {
+	/**
+	 * Logger
+	 */
+	private static final Logger debug = Log.getLogger(RandPassGenerator.class.getName());
+
 	/**
 	 * Version string
 	 */
@@ -100,7 +106,7 @@ public class RandPassGenerator {
 	 * Print an error message to stderr
 	 */
 	private void message(String s) {
-		System.err.println(s);
+		debug.info(s);
 	}
 
 	/**
@@ -108,7 +114,7 @@ public class RandPassGenerator {
 	 */
 	private void startmessage(String s) {
 		if (verbose)
-			System.err.println(s);
+			debug.info(s);
 	}
 
 	/**
@@ -230,7 +236,7 @@ public class RandPassGenerator {
 				if (randman.performSelfTest()) {
 					startmessage("Random generation manager self-tests passed.");
 				} else {
-					System.err.println("Randomness self-test failed.  Exiting.");
+					debug.info("Randomness self-test failed.  Exiting.");
 				}
 			}
 
@@ -409,7 +415,7 @@ public class RandPassGenerator {
 
 		int i;
 		String pass;
-		ArrayList<String> passes = new ArrayList<String>(count);
+		ArrayList<String> passes = new ArrayList<>(count);
 		for (i = 0; i < count; i++) {
 			pass = cs.getRandomStringByEntropy(strength, drbg);
 			if (pass == null) {
@@ -490,7 +496,7 @@ public class RandPassGenerator {
 
 		int i;
 		String[] username;
-		ArrayList<String> users = new ArrayList<String>(count);
+		ArrayList<String> users = new ArrayList<>(count);
 		for (i = 0; i < count; i++) {
 			username = ws.getRandomWordList(1, drbg);
 			if (username == null) {
@@ -579,7 +585,7 @@ public class RandPassGenerator {
 
 		int i;
 		String[] passphrase;
-		ArrayList<String> passes = new ArrayList<String>(count);
+		ArrayList<String> passes = new ArrayList<>(count);
 		for (i = 0; i < count; i++) {
 			passphrase = ws.getRandomWordListByEntropy(strength, drbg);
 			if (passphrase == null) {
@@ -652,8 +658,8 @@ public class RandPassGenerator {
 
 		int i;
 		String rawkey;
-		ArrayList<String> keys = new ArrayList<String>(count);
-		ArrayList<String> hkeys = new ArrayList<String>(count);
+		ArrayList<String> keys = new ArrayList<>(count);
+		ArrayList<String> hkeys = new ArrayList<>(count);
 
 		for (i = 0; i < count; i++) {
 			rawkey = kg.generateKey(strength, drbg);
@@ -765,9 +771,9 @@ public class RandPassGenerator {
 
 		// decrypt key file
 		File decryptedFile = new File(encryptedFilePath + "_decrypted.txt");
-		System.err.println("Attempting to decrypt input file to output " + decryptedFile);
+		debug.info("Attempting to decrypt input file to output " + decryptedFile);
 		KeyUnwrapper.fileProcessor(pass, encryptedFile, decryptedFile);
-		System.err.println("Wrote decrypted key to " + decryptedFile);
+		debug.info("Wrote decrypted key to " + decryptedFile);
 	}
 
 	/**
@@ -780,7 +786,7 @@ public class RandPassGenerator {
 	 * @return an ArrayList of IDs
 	 */
 	private static ArrayList<String> generateKeyIDList(ArrayList<String> hkeys) {
-		ArrayList<String> fhkeys = new ArrayList<String>();
+		ArrayList<String> fhkeys = new ArrayList<>();
 
 		for (String hhk : hkeys) {
 			String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
@@ -794,8 +800,8 @@ public class RandPassGenerator {
 	 */
 	private static String bytesToHex(byte[] hash) {
 		StringBuffer hexString = new StringBuffer();
-		for (int i = 0; i < hash.length; i++) {
-			String hex = Integer.toHexString(0xff & hash[i]);
+		for (byte element : hash) {
+			String hex = Integer.toHexString(0xff & element);
 			if (hex.length() == 1)
 				hexString.append('0');
 			hexString.append(hex);
@@ -852,25 +858,25 @@ public class RandPassGenerator {
 		OptionManager opt = makeOptions();
 
 		if (args.length == 0) {
-			System.err.println("RandPassGenerator - exceptionally conservative utility for");
-			System.err.println("generating random keys, passwords, passphrases and usernames");
-			System.err.println("at full cryptographic strength.");
-			System.err.println("");
-			System.err.println("Command-line options must be supplied.  Options are:");
-			System.err.println(opt.generateUsageText());
-			System.err.println("");
-			System.err.println("At least one of -pp, -pw, -k or -un must be provided.");
-			System.err.println("Keys, passwords, passphrases and usernames written to stdout by default.");
-			System.err.println("");
-			System.err.println(VERSION);
+			debug.info("RandPassGenerator - exceptionally conservative utility for");
+			debug.info("generating random keys, passwords, passphrases and usernames");
+			debug.info("at full cryptographic strength.");
+			debug.info("");
+			debug.info("Command-line options must be supplied.  Options are:");
+			debug.info(opt.generateUsageText());
+			debug.info("");
+			debug.info("At least one of -pp, -pw, -k or -un must be provided.");
+			debug.info("Keys, passwords, passphrases and usernames written to stdout by default.");
+			debug.info("");
+			debug.info(VERSION);
 			System.exit(1);
 		}
 
 		// parse command-line args
 		errs = opt.parseOptions(args);
 		if (errs > 0) {
-			System.err.println("Command line had " + errs + " errors.");
-			System.err.println("Please fix errors and try again.  Exiting.");
+			debug.info("Command line had " + errs + " errors.");
+			debug.info("Please fix errors and try again.  Exiting.");
 			System.exit(2);
 		}
 
@@ -898,18 +904,18 @@ public class RandPassGenerator {
 		// check for something to do
 		if (decryptFilePath != null) {
 			if (verbose)
-				System.err.println("RandPassGen - attempting to decrypt encrypted key file " + decryptFilePath);
+				debug.info("RandPassGen - attempting to decrypt encrypted key file " + decryptFilePath);
 			decryptPrompt(decryptFilePath);
 		}
 
 		if (numKeys <= 0 && numPasswords <= 0 && numPassphrases <= 0 && numUsernames <= 0) {
-			System.err.println("No keys, passwords, passphrases or usernames requested.  Exiting.");
+			debug.info("No keys, passwords, passphrases or usernames requested.  Exiting.");
 			System.exit(3);
 		}
 
 		// check that conflicting options were not supplied
 		if (passwordCharset != null && passwordCustomCharsetFile != null) {
-			System.err.println("Option conflict: -pwcs and -pwcustom may not be supplied together.  Exiting.");
+			debug.info("Option conflict: -pwcs and -pwcustom may not be supplied together.  Exiting.");
 			System.exit(4);
 		}
 
@@ -919,7 +925,7 @@ public class RandPassGenerator {
 			try {
 				pw = new PrintWriter(outfile);
 			} catch (IOException ie) {
-				System.err.println("Error: could not write to output file '" + outfile + "', exiting.");
+				debug.info("Error: could not write to output file '" + outfile + "', exiting.");
 				System.exit(5);
 			}
 		} else {
@@ -928,21 +934,21 @@ public class RandPassGenerator {
 
 		// ready to create the RandPassGenerator
 		if (verbose) {
-			System.err.println(VERSION);
-			System.err.println("About to start initialization, requested key/passwd strength = " + strength);
+			debug.info(VERSION);
+			debug.info("About to start initialization, requested key/passwd strength = " + strength);
 		}
 
 		if (logfile.equalsIgnoreCase("null") || logfile.equalsIgnoreCase("console") || logfile.equalsIgnoreCase("none")
 				|| logfile.equalsIgnoreCase("stderr")) {
 			logfile = null;
-			System.err.println("Logging will go to stderr.");
+			debug.info("Logging will go to stderr.");
 		}
 
 		RandPassGenerator rpg = null;
 		try {
 			rpg = new RandPassGenerator(logfile, pw, verbose);
 		} catch (Exception e) {
-			System.err.println("Could not initialize RandPassGenerator: " + e);
+			debug.info("Could not initialize RandPassGenerator: " + e);
 			if (verbose) {
 				e.printStackTrace(System.err);
 			}
@@ -982,7 +988,7 @@ public class RandPassGenerator {
 					randUpcase = 0;
 				} else {
 					if (verbose) {
-						System.err.println("Using random upcase on first " + randUpcase + " letters.");
+						debug.info("Using random upcase on first " + randUpcase + " letters.");
 					}
 					rpg.getLogger().info("Random upcase enabled for first " + randUpcase + " letters of passphrases");
 				}
@@ -1028,7 +1034,7 @@ public class RandPassGenerator {
 		// flush and close the output PrintWriter if necessary
 		if (pw != null) {
 			if (pw.checkError()) {
-				System.err.println("Error: output stream reported an error; output might not be complete.");
+				debug.info("Error: output stream reported an error; output might not be complete.");
 			}
 			pw.close();
 			pw = null;

@@ -22,7 +22,7 @@ import gov.nsa.ia.util.FixedValuesEntropySource;
  * Step 5 - Generate output of fixed size
  *
  * Step 6 [implicit] - dispose
- * 
+ *
  * After Step 2 and step 3, we must check the V, C, and rsc values of the
  * HashDRBG After Step 4, we must check the V, C, rsc, and output values. After
  * Step 5, we must check the V, C, and rsc values.

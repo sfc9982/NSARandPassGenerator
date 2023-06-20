@@ -10,6 +10,7 @@ import gov.nsa.ia.drbg.EntropyUtil;
 import gov.nsa.ia.drbg.FileEntropySource;
 import gov.nsa.ia.drbg.HashDRBG;
 import gov.nsa.ia.drbg.JavaSecRandEntropySource;
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.LousyEntropySource;
 import gov.nsa.ia.util.SelfTestable;
 
@@ -17,11 +18,11 @@ import gov.nsa.ia.util.SelfTestable;
  * This class manages creation and maintenance of the DRBGs and EntropySource
  * objects necessary for generating cryptographic keys, passwords, and
  * passphrases.
- * 
+ *
  * In addition to managing the entropy sources, this class also has the ability
  * to, at startup, read extra entropy from a file, and at shutdown to save
  * entropy to a file, if configured by its caller to do so.
- * 
+ *
  * This class manages three types of entropy sources.
  * <ol>
  * <li>The primary entropy source is used as the source for a HashDRBG. This
@@ -38,17 +39,19 @@ import gov.nsa.ia.util.SelfTestable;
  * once at startup (getEntropy method) and once at shutdown (saveEntropy
  * method).
  * </ol>
- * 
+ *
  * The usual calling sequence for this class would be: create object, create
  * sources, set sources, set logger, call initialize method, call
  * performSelfTest method, call generateKey method many times, call shutdown
  * method. Also, it is often a good idea to set up a ShutdownHook to call the
  * shutdown method, by using Runtime.addShutdownHook and the utility method
  * getKeyGenerationShutdownHook().
- * 
+ *
  * @author nziring Updated 09252018 by amsagos
  */
 public class RandManager implements SelfTestable {
+	private static final Logger debug = Log.getLogger(RandManager.class.getName());
+
 	/**
 	 * Number of blocks of good entropy to save to a file at shutdown, if possible.
 	 * Block size is 8 bytes.
@@ -79,7 +82,7 @@ public class RandManager implements SelfTestable {
 	/**
 	 * Set to true if primary source self-test entropy may be added to the nonce
 	 * given to the instantiate function of the DRBG.
-	 * 
+	 *
 	 * POST-REVIEW NOTE: Default value is false because SP800-90A 11.3.2 can be
 	 * construed as prohibiting re-use of self-test entropy in any form. Which is a
 	 * darn shame since it is perfectly good entropy. (My own opinion is that the
@@ -102,7 +105,7 @@ public class RandManager implements SelfTestable {
 	 * be usable. At the least, you must call setPrimarySource() to supply a usable
 	 * primary EntropySource and initialize() to fire up the DRBG and perform
 	 * successful self-test.
-	 * 
+	 *
 	 * @param nam Base name for this manager, must be non-null
 	 * @param l   Logger to use; if null, then a new Logger will be created
 	 */
@@ -130,7 +133,7 @@ public class RandManager implements SelfTestable {
 	 * Set a new Logger for us. This must be done BEFORE calling initialize(), or it
 	 * will be useless. If this is called with null, it will cause a new default
 	 * Logger to be created, but thats not usually a good idea.
-	 * 
+	 *
 	 * @param l Logger to use for logging our operations
 	 */
 	public void setLogger(Logger l) {
@@ -198,7 +201,7 @@ public class RandManager implements SelfTestable {
 	 * must block until it has high-quality entropy to deliver. This method must be
 	 * called before calling initialize(). If a primary source was already set, that
 	 * source will have its dispose() method called prior to being replaced.
-	 * 
+	 *
 	 * @param src A good EntropySource, such as a UnixDevRandomEntropySource or
 	 *            JavaSecRandEntropySource.
 	 */
@@ -224,7 +227,7 @@ public class RandManager implements SelfTestable {
 	 * supplemental source is already set, that source will have its dispose()
 	 * method called prior to being replaced. It is okay to not set a supplemental
 	 * source.
-	 * 
+	 *
 	 * @param src An EntropySource, such as a FileEntropySource.
 	 */
 	public void setSupplementalSource(EntropySource src) {
@@ -245,7 +248,7 @@ public class RandManager implements SelfTestable {
 	/**
 	 * Set the startup entropy source. This source must be a FileEntropySource. This
 	 * method should be called before initialize().
-	 * 
+	 *
 	 * @param src A FileEntropySource that can support saveEntropy()
 	 */
 	// public void setStartupSource(FileEntropySource src) {
@@ -275,11 +278,11 @@ public class RandManager implements SelfTestable {
 	 * Initialize this RandManager object. This method should be called exactly
 	 * once, before this RandManager can be used. If initialization succeeds, this
 	 * method returns true and the method isOkay() will return true also.
-	 * 
+	 *
 	 * Internally, this method uses the primarySource and the startupSource. It
 	 * builds the SP800-90 nonce from the startupSource and self-test entropy from
 	 * the primarySource.
-	 * 
+	 *
 	 * @return true if initialization succeeds, false otherwise
 	 */
 	public boolean initialize() {
@@ -367,7 +370,7 @@ public class RandManager implements SelfTestable {
 	 * time since the most recent use of the supplemental source was more than the
 	 * supplement interval, then we grab some additional input from the supplemental
 	 * source and use it with the call to the DRBG generate method.
-	 * 
+	 *
 	 * @param numBytes size of the desired random key in bytes, more than 0
 	 */
 	public byte[] generateKey(int numBytes) {
@@ -430,6 +433,7 @@ public class RandManager implements SelfTestable {
 	 * generation of keys of sizes SELF_TEST_SIZES. All the test generations must
 	 * succeed in order for self-test to pass. On pass, this method returns true.
 	 */
+	@Override
 	public boolean performSelfTest() {
 		if (!isOkay()) {
 			log.info("Self-test failing due to generator state not okay.");
@@ -491,7 +495,7 @@ public class RandManager implements SelfTestable {
 		FileEntropySource suppsrc = null;
 
 		if (args.length == 0) {
-			System.err.println("Usage: java gov.nsa.ia.RandManager startup-file [suppl-file]");
+			debug.info("Usage: java gov.nsa.ia.RandManager startup-file [suppl-file]");
 			System.exit(0);
 		}
 
@@ -507,18 +511,18 @@ public class RandManager implements SelfTestable {
 			startupsrc = new FileEntropySource(saveFile, 8, 2);
 			if (suppFile != null)
 				suppsrc = new FileEntropySource(suppFile, 8, 2);
-			System.err.println("Created sources: p=" + primarysrc + ", s=" + startupsrc + ", s=" + suppsrc);
+			debug.info("Created sources: p=" + primarysrc + ", s=" + startupsrc + ", s=" + suppsrc);
 			kgm.setPrimarySource(primarysrc);
 			kgm.setStartupSource(startupsrc);
 			kgm.setSupplementalSource(suppsrc);
-			System.err.println("About to initialize, might take time..");
+			debug.info("About to initialize, might take time..");
 			if (kgm.initialize()) {
-				System.err.println(
+				debug.info(
 						"KGM initialization succeeeded, proceeded to self-test, this might take a while if the DRBG blocks.");
 				if (kgm.performSelfTest()) {
-					System.err.println("KGM self-test passed!");
+					debug.info("KGM self-test passed!");
 				} else {
-					System.err.println("KGM self-test failed.  Bummer!");
+					debug.info("KGM self-test failed.  Bummer!");
 				}
 
 				// now try to get some test keys using the DRBG
@@ -528,23 +532,23 @@ public class RandManager implements SelfTestable {
 				for (ki = 0; ki < TEST_KEY_COUNT; ki++) {
 					testkey = kgm.generateKey(TEST_KEY_SIZE);
 					if (testkey == null || testkey.length != TEST_KEY_SIZE) {
-						System.err.println("Key generate failed on bulk test iteration " + ki);
+						debug.info("Key generate failed on bulk test iteration " + ki);
 						System.exit(1);
 					}
 					// possibly print some of the keys here
-					System.err.println(
+					debug.info(
 							"Bulk test iteration no. " + ki + " key is " + EntropyUtil.bufferToString(testkey));
-					System.err.println("\tentropy is " + EntropyUtil.computeByteEntropy(testkey, TEST_KEY_SIZE));
+					debug.info("\tentropy is " + EntropyUtil.computeByteEntropy(testkey, TEST_KEY_SIZE));
 
 				}
 
-				System.err.println("Performing KGM shutdown.");
+				debug.info("Performing KGM shutdown.");
 				kgm.shutdown();
 			} else {
-				System.err.println("KGM initialization failed!");
+				debug.info("KGM initialization failed!");
 			}
 		} catch (Exception e) {
-			System.err.println("Error on unit test: " + e);
+			debug.info("Error on unit test: " + e);
 			e.printStackTrace();
 		}
 

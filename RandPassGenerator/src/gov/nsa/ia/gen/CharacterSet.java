@@ -8,6 +8,7 @@ import gov.nsa.ia.drbg.AbstractDRBG;
 import gov.nsa.ia.drbg.DRBGConstants;
 import gov.nsa.ia.drbg.EntropySource;
 import gov.nsa.ia.drbg.HashDRBG;
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.LousyEntropySource;
 
 /**
@@ -20,7 +21,7 @@ import gov.nsa.ia.util.LousyEntropySource;
  * this class does not offer such features.
  *
  * Actually, this class is mis-named; it should be CharacterList.
- * 
+ *
  * Note that the maximum size of the set is 32767.
  *
  * POST-REVIEW NOTES: This class allows use of character sets with repeated
@@ -36,6 +37,8 @@ import gov.nsa.ia.util.LousyEntropySource;
  */
 
 public class CharacterSet {
+	private static final Logger debug = Log.getLogger(CharacterSet.class.getName());
+
 	/** Uppercase letters for English */
 	public static final String UPPERCASE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -80,7 +83,7 @@ public class CharacterSet {
 		shortbuf = null;
 		shortbufIndex = 0;
 		charset = null;
-		sets = new ArrayList<String>(5);
+		sets = new ArrayList<>(5);
 	}
 
 	/**
@@ -192,7 +195,7 @@ public class CharacterSet {
 	/**
 	 * Return the number of bits of entropy that can be expected in one character
 	 * from this set.
-	 * 
+	 *
 	 * Basically log2(deduped size).
 	 *
 	 * POST-REVIEW NOTES: Added code to count entropy based on number of unique
@@ -246,7 +249,7 @@ public class CharacterSet {
 	 * of them to use. This modifies state variables, and return the status code
 	 * from the DRBG generate() method. Note that we're talking about positive
 	 * shorts only, so each of them effectively contains 15 bits of entropy.
-	 * 
+	 *
 	 * @param drbg an AbstractDRBG, already instantiated
 	 * @return status code, if anything other than SUCCESS, then the buffer of
 	 *         shorts is worthless
@@ -328,13 +331,13 @@ public class CharacterSet {
 	public String getRandomStringByEntropy(int strength, AbstractDRBG drbg) {
 		if (strength < 1) {
 			logger.warning("CharacterSet - bad strength value given, 0 or negative, returning null.");
-			System.err.println("Error - bad strength value given, 0 or negative, returning null.");
+			debug.info("Error - bad strength value given, 0 or negative, returning null.");
 			return null;
 		}
 		if (strength > (drbg.getStrength() * 2)) {
 			logger.warning("CharacterSet - strength request " + strength
 					+ " is greater than twice the DRBG's hash size of " + drbg.getStrength() + ", returning null.");
-			System.err.println("Error - strength request " + strength + " is greater than twice DRBG's hash size of "
+			debug.info("Error - strength request " + strength + " is greater than twice DRBG's hash size of "
 					+ drbg.getStrength() + ".");
 			return null;
 		}
@@ -421,19 +424,19 @@ public class CharacterSet {
 		cset = new CharacterSet(log);
 		cset.addSet(LOWERCASE_LETTERS);
 		cset.addSet(UPPERCASE_LETTERS);
-		System.err.println("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
+		debug.info("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
 		for (ix = 0; ix < TESTCNT; ix++) {
 			pw = cset.getRandomString(12, drbg);
-			System.err.println("Test " + testno + " word " + ix + ": " + pw);
+			debug.info("Test " + testno + " word " + ix + ": " + pw);
 		}
 
 		// test 2 - base usable character set, 160 bits of strength
 		testno = 2;
 		cset = new CharacterSet(log, DEFAULT_USABLE);
-		System.err.println("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
+		debug.info("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
 		for (ix = 0; ix < TESTCNT; ix++) {
 			pw = cset.getRandomStringByEntropy(160, drbg);
-			System.err.println("Test " + testno + " word " + ix + ": " + pw);
+			debug.info("Test " + testno + " word " + ix + ": " + pw);
 		}
 
 		// test 3 - custom character set, 256 bits of strength
@@ -441,10 +444,10 @@ public class CharacterSet {
 		cset = new CharacterSet(log);
 		cset.addSet(DEFAULT_USABLE);
 		cset.addSet("-_^!<>{}[]=()'");
-		System.err.println("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
+		debug.info("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
 		for (ix = 0; ix < TESTCNT; ix++) {
 			pw = cset.getRandomStringByEntropy(256, drbg);
-			System.err.println("Test " + testno + " word " + ix + ": " + pw);
+			debug.info("Test " + testno + " word " + ix + ": " + pw);
 		}
 
 		// test 4 - custom character set with dupes
@@ -452,11 +455,11 @@ public class CharacterSet {
 		cset = new CharacterSet(log);
 		cset.addSet("abcdefghijklmnopqrstuvwxyz012345aaaaaabbbbcccc0000000000tttttttttttttttttt");
 		cset.addSet("ggggggggghhhhhhhhhhhhjjjjjjjjjjjj");
-		System.err.println("Test " + testno + " bit strength should be 5");
-		System.err.println("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
+		debug.info("Test " + testno + " bit strength should be 5");
+		debug.info("Test " + testno + " bit strength per char is " + cset.bitsPerItem());
 		for (ix = 0; ix < TESTCNT; ix++) {
 			pw = cset.getRandomStringByEntropy(64, drbg);
-			System.err.println("Test " + testno + " word " + ix + ": " + pw);
+			debug.info("Test " + testno + " word " + ix + ": " + pw);
 		}
 
 		drbg.uninstantiate();

@@ -3,7 +3,7 @@ package gov.nsa.ia.util;
 /**
  * Classes which implement this interface have the ability to perform a basic
  * self-test.
- * 
+ *
  * @author nziring
  */
 public interface SelfTestable {

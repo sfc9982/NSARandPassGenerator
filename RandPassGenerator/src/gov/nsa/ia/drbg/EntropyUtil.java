@@ -1,13 +1,18 @@
 package gov.nsa.ia.drbg;
 
 import java.math.BigInteger;
+import java.util.logging.Logger;
+
+import gov.nsa.ia.util.Log;
 
 /**
  * Some utility methods for helping self-test entropy sources.
- * 
+ *
  * @author nziring
  */
 public class EntropyUtil {
+	private static final Logger debug = Log.getLogger(EntropyUtil.class.getName());
+
 	/**
 	 * Check the 8-bit (byte) entropy of a buffer, return false if it doesnt exceed
 	 * a supplied threshold.
@@ -26,7 +31,7 @@ public class EntropyUtil {
 
 	/**
 	 * Compute the byte entropy of a sample, return it.
-	 * 
+	 *
 	 * @param buf buffer of bytes
 	 * @param len number of bytes of data in the buffer
 	 * @return shannon entropy of 8-bit chunks in the buffer
@@ -43,7 +48,7 @@ public class EntropyUtil {
 			len = buf.length;
 		int i;
 		for (i = 0; i < len; i++) {
-			buckets[(int) (buf[i]) & mask] += 1;
+			buckets[(buf[i]) & mask] += 1;
 		}
 
 		p = new double[count];
@@ -61,7 +66,7 @@ public class EntropyUtil {
 
 	/**
 	 * Compute the short entropy of a sample, return it.
-	 * 
+	 *
 	 * @param buf buffer of integers, all 0-MAX_SHORT
 	 * @param len number of integers in the buffer
 	 * @return shannon entropy of 16-bit chunks in the buffer
@@ -78,7 +83,7 @@ public class EntropyUtil {
 			len = buf.length;
 		int i;
 		for (i = 0; i < len; i++) {
-			buckets[(int) (buf[i]) & mask] += 1;
+			buckets[(buf[i]) & mask] += 1;
 		}
 
 		p = new double[count];
@@ -104,7 +109,7 @@ public class EntropyUtil {
 	 * specified size. Usually, a good size is 4 or 6. Another rule of thumb is: set
 	 * the bit size to s where 16 < (buflen*8 / 2^s); so for buflen of 128, use s=6
 	 * or s=5. If any of the arguments are invalid,
-	 * 
+	 *
 	 * @param buf       buffer of bytes of ostensibly uniformly distributed bits
 	 * @param len       amount of buffer to use, 0 means use whole buffer
 	 * @param chunkBits number of bits per sample, must be 2 or more
@@ -137,10 +142,10 @@ public class EntropyUtil {
 		expectedCount = (((double) (len * 8)) / chunkBits) / numcounts;
 
 		/*
-		 * System.err.println("chiSquared debug: len of buf in bytes: " + len);
-		 * System.err.println("chiSquared debug: chunkBits=" + chunkBits);
-		 * System.err.println("chiSquared debug: numcounts=" + numcounts);
-		 * System.err.println("chiSquared debug: expectedCount=" + expectedCount);
+		 * debug.info("chiSquared debug: len of buf in bytes: " + len);
+		 * debug.info("chiSquared debug: chunkBits=" + chunkBits);
+		 * debug.info("chiSquared debug: numcounts=" + numcounts);
+		 * debug.info("chiSquared debug: expectedCount=" + expectedCount);
 		 */
 
 		// count the occurences in each bin
@@ -175,7 +180,7 @@ public class EntropyUtil {
 	/**
 	 * Test for whether a supposed uniform random distribution is actually
 	 * satisfactorily uniform, based on 80% likelihood for chi-squared statistic.
-	 * 
+	 *
 	 * @param chisq Chi-squared statistic, from chiSquaredStatistic method
 	 * @param degfr sample size in bits, same as chunkBits, must be >=2 and <=16.
 	 * @return true if chisq is under p=0.2 limit for deg of freedom, false
@@ -196,7 +201,7 @@ public class EntropyUtil {
 
 	/**
 	 * Compute the log base 2 of a number.
-	 * 
+	 *
 	 * @param x number to get log of
 	 * @return the log base 2
 	 */
@@ -213,8 +218,8 @@ public class EntropyUtil {
 		StringBuilder sb = new StringBuilder(b.length * 2);
 		int i;
 		for (i = 0; i < b.length; i++) {
-			sb.append(nib[(((int) b[i]) & 0x0f0) >> 4]);
-			sb.append(nib[(((int) b[i]) & 0x0f)]);
+			sb.append(nib[((b[i]) & 0x0f0) >> 4]);
+			sb.append(nib[((b[i]) & 0x0f)]);
 		}
 		return sb.toString();
 	}
@@ -270,27 +275,27 @@ public class EntropyUtil {
 			buf[i] = (byte) i;
 		}
 
-		System.err.println("Unit test of EntropyUtil class.");
+		debug.info("Unit test of EntropyUtil class.");
 
 		double ent;
 		ent = EntropyUtil.computeByteEntropy(buf, 0);
-		System.err.println("Entropy of base buffer (should be 8): " + ent);
+		debug.info("Entropy of base buffer (should be 8): " + ent);
 		double cs;
 		cs = EntropyUtil.chiSquaredStatistic(buf, 0, 4);
-		System.err.println("Chi-squared statistic for 4-bit samples (should be 0): " + cs);
-		System.err.println("Test says: " + EntropyUtil.testChiSquared(cs, 4) + " (should be true)");
+		debug.info("Chi-squared statistic for 4-bit samples (should be 0): " + cs);
+		debug.info("Test says: " + EntropyUtil.testChiSquared(cs, 4) + " (should be true)");
 		cs = EntropyUtil.chiSquaredStatistic(buf, 0, 6);
-		System.err.println("Chi-squared statistic for 6-bit samples (should be small): " + cs);
-		System.err.println("Test says: " + EntropyUtil.testChiSquared(cs, 6) + " (should be true)");
+		debug.info("Chi-squared statistic for 6-bit samples (should be small): " + cs);
+		debug.info("Test says: " + EntropyUtil.testChiSquared(cs, 6) + " (should be true)");
 
 		buf[14] = buf[57] = buf[90] = buf[113] = buf[168] = (byte) 0;
 		buf[29] = buf[64] = buf[127] = buf[149] = buf[199] = (byte) 1;
-		System.err.println("Corrupted the buffer, trying again...");
-		System.err.println("Chi-squared statistic for 4-bit samples: " + cs);
-		System.err.println("Test says: " + EntropyUtil.testChiSquared(cs, 4) + " (should be false)");
+		debug.info("Corrupted the buffer, trying again...");
+		debug.info("Chi-squared statistic for 4-bit samples: " + cs);
+		debug.info("Test says: " + EntropyUtil.testChiSquared(cs, 4) + " (should be false)");
 		cs = EntropyUtil.chiSquaredStatistic(buf, 0, 6);
-		System.err.println("Chi-squared statistic for 6-bit samples: " + cs);
-		System.err.println("Test says: " + EntropyUtil.testChiSquared(cs, 6) + " (should be false)");
+		debug.info("Chi-squared statistic for 6-bit samples: " + cs);
+		debug.info("Test says: " + EntropyUtil.testChiSquared(cs, 6) + " (should be false)");
 
 	}
 }

@@ -2,7 +2,7 @@ package gov.nsa.ia.drbg;
 
 /**
  * This interface encapsulates the constants mandated by NIST SP800-90.
- * 
+ *
  * @author nziring
  */
 public interface DRBGConstants {

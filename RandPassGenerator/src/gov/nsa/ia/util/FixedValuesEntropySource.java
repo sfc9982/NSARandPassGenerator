@@ -2,6 +2,7 @@ package gov.nsa.ia.util;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 import gov.nsa.ia.drbg.EntropySource;
 import gov.nsa.ia.drbg.EntropyUtil;
@@ -10,10 +11,11 @@ import gov.nsa.ia.drbg.EntropyUtil;
  * The FixedValuesEntropySource is completely deterministic. It holds a list of
  * fixed values, and returns them in a cycle. It is used only for performing
  * known-answer tests.
- * 
+ *
  * @author nziring
  */
 public class FixedValuesEntropySource implements EntropySource {
+	private static final Logger debug = Log.getLogger(FixedValuesEntropySource.class.getName());
 	private LinkedList<byte[]> values;
 	private int valueIndex;
 
@@ -21,6 +23,7 @@ public class FixedValuesEntropySource implements EntropySource {
 	 * Return our internal value, regardless of what length was requested. If this
 	 * source has been dispose()ed then returns null.
 	 */
+	@Override
 	public byte[] getEntropy(int requestedEntropyBits, int minOutputBytes, int maxOutputBytes) {
 		if (values == null)
 			return null;
@@ -35,6 +38,7 @@ public class FixedValuesEntropySource implements EntropySource {
 	/**
 	 * Returns true if the internal value was initialized.
 	 */
+	@Override
 	public boolean performSelfTest() {
 		return (values != null);
 	}
@@ -42,6 +46,7 @@ public class FixedValuesEntropySource implements EntropySource {
 	/**
 	 * Always returns null.
 	 */
+	@Override
 	public byte[] getSelfTestEntropy() {
 		return null;
 	}
@@ -49,6 +54,7 @@ public class FixedValuesEntropySource implements EntropySource {
 	/**
 	 * Makes this entropy source unusable.
 	 */
+	@Override
 	public void dispose() {
 		values = null;
 		valueIndex = 0;
@@ -60,7 +66,7 @@ public class FixedValuesEntropySource implements EntropySource {
 	 * After calling this constructor, you must call addValue at least once.
 	 */
 	public FixedValuesEntropySource() {
-		values = new LinkedList<byte[]>();
+		values = new LinkedList<>();
 		valueIndex = 0;
 	}
 
@@ -115,7 +121,7 @@ public class FixedValuesEntropySource implements EntropySource {
 	public static void main(String[] args) {
 		boolean pass = false;
 
-		System.err.println("Testing FixedValuesEntropySource.");
+		debug.info("Testing FixedValuesEntropySource.");
 
 		FixedValuesEntropySource src = new FixedValuesEntropySource();
 		for (String v : testStrings) {
@@ -123,7 +129,7 @@ public class FixedValuesEntropySource implements EntropySource {
 		}
 
 		boolean pt = src.performSelfTest();
-		System.err.println("\tdo-nothing self-test returns " + pt);
+		debug.info("\tdo-nothing self-test returns " + pt);
 
 		int i;
 		byte[] ev;
@@ -131,10 +137,10 @@ public class FixedValuesEntropySource implements EntropySource {
 		for (i = 0; i < 6; i++) {
 			ev = src.getEntropy(128, 16, 44); // params are ignored
 			evStr = EntropyUtil.bufferToString(ev);
-			System.err.println("\ti = " + i + " got back:");
-			System.err.println("\t" + evStr);
-			System.err.println("\t should be:");
-			System.err.println("\t" + testStrings[i % testStrings.length]);
+			debug.info("\ti = " + i + " got back:");
+			debug.info("\t" + evStr);
+			debug.info("\t should be:");
+			debug.info("\t" + testStrings[i % testStrings.length]);
 			if (!(evStr.equals(testStrings[i % testStrings.length]))) {
 				pass = false;
 				break;
@@ -144,6 +150,6 @@ public class FixedValuesEntropySource implements EntropySource {
 		}
 
 		src.dispose();
-		System.err.println("Self-test pass: " + pass);
+		debug.info("Self-test pass: " + pass);
 	}
 }

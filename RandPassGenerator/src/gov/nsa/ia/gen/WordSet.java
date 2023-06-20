@@ -16,6 +16,7 @@ import gov.nsa.ia.drbg.AbstractDRBG;
 import gov.nsa.ia.drbg.DRBGConstants;
 import gov.nsa.ia.drbg.EntropySource;
 import gov.nsa.ia.drbg.HashDRBG;
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.LousyEntropySource;
 
 /**
@@ -36,6 +37,7 @@ import gov.nsa.ia.util.LousyEntropySource;
  */
 
 public class WordSet {
+	private static final Logger debug = Log.getLogger(WordSet.class.getName());
 	/** default path to the dictionary we will use */
 	public static final String DATA_PATH = "wordlist.txt";
 
@@ -108,7 +110,7 @@ public class WordSet {
 			logger.info("WordSet - successfully opened word data file: " + src);
 
 			String line;
-			HashSet<String> wordset = new HashSet<String>();
+			HashSet<String> wordset = new HashSet<>();
 			cnt = 0;
 			while ((line = br.readLine()) != null) {
 				line = line.trim();
@@ -130,7 +132,7 @@ public class WordSet {
 				/* only throws if already closed */ }
 			logger.info("WordSet - closed stream to data file");
 
-			basewords = new ArrayList<String>();
+			basewords = new ArrayList<>();
 			basewords.addAll(wordset);
 		} catch (IOException e) {
 			logger.warning("WordSet - IO Exception on processing data file: " + e);
@@ -145,7 +147,7 @@ public class WordSet {
 	 * by creating a fresh version of the words array that can be indexed
 	 * separately.) Returns the number of words now available for random choices, it
 	 * is up to the caller to determine if that size set is usable.
-	 * 
+	 *
 	 * @param minlen minimum length of word, 0 or more
 	 * @param maxlen maximum length of word, 2 or more
 	 * @return size of the new, reduced set, which may be 0
@@ -162,7 +164,7 @@ public class WordSet {
 
 		// minLength = minlen;
 		// maxLength = maxlen;
-		currentSet = new ArrayList<String>();
+		currentSet = new ArrayList<>();
 		cnt = 0;
 		for (String s : basewords) {
 			len = s.length();
@@ -266,7 +268,7 @@ public class WordSet {
 	 * Get a random list of words of a specified length. Returns the list as an
 	 * array of Strings, or null if anything goes wrong or if the len value supplied
 	 * is 0 or negative.
-	 * 
+	 *
 	 * Note that you can combine the strings into a conventional space-separated
 	 * passphrase as follows:
 	 *
@@ -309,7 +311,7 @@ public class WordSet {
 	 * entropy. Returns the list as an array of Strings, or null if anything goes
 	 * wrong or if the entropy value requested is 0 or negative, or if the entropy
 	 * value requested is greater than the full strength of the underlying DRBG.
-	 * 
+	 *
 	 * @param strength strength value in bits entropy, usually 128, 160, or 256
 	 * @param drbg     usable AbstractDRBG, already instantiated
 	 * @return array of strings, or null on any error
@@ -317,14 +319,14 @@ public class WordSet {
 	public String[] getRandomWordListByEntropy(int strength, AbstractDRBG drbg) {
 		if (strength < 1) {
 			logger.warning("WordSet - bad strength value given, 0 or negative, returning null.");
-			System.err.println("Error - bad strength value given, 0 or negative, returning null.");
+			debug.info("Error - bad strength value given, 0 or negative, returning null.");
 			return null;
 		}
 		if (strength > (drbg.getStrength() * 2)) {
 			logger.warning("WordSet - strength request " + strength
 					+ " is greater than twice DRBG's underlying hash strength of " + drbg.getStrength()
 					+ ", returning null.");
-			System.err.println("Error - strength request " + strength + " is greater than twice DRBG's hash size of "
+			debug.info("Error - strength request " + strength + " is greater than twice DRBG's hash size of "
 					+ drbg.getStrength() + ".");
 			return null;
 		}
@@ -349,7 +351,7 @@ public class WordSet {
 	 * @param wrd  A string composed of letters
 	 * @param n    How many of the letters to possibly upcase at probability 1/2
 	 * @param drbg random source
-	 * 
+	 *
 	 * @return a new string of same length with some letters possibly converted to
 	 *         uppercase
 	 */
@@ -465,7 +467,7 @@ public class WordSet {
 		// test 1 - default lengths
 		for (ix = 0; ix < TESTCNT; ix++) {
 			word = ws.getRandomWord(drbg);
-			System.err.println("WordSet test 1, word " + ix + ": " + word);
+			debug.info("WordSet test 1, word " + ix + ": " + word);
 		}
 
 		// test 2 - shorter length range
@@ -474,7 +476,7 @@ public class WordSet {
 		log.info("WordSet test 2 - entropy per word " + ws.bitsPerItem());
 		for (ix = 0; ix < TESTCNT; ix++) {
 			word = ws.getRandomWord(drbg);
-			System.err.println("WordSet test 2, word " + ix + ": " + word);
+			debug.info("WordSet test 2, word " + ix + ": " + word);
 		}
 
 		// test 3 - medium length range, by entropy
@@ -485,13 +487,13 @@ public class WordSet {
 		for (ix = 0; ix < TESTCNT; ix++) {
 			passphrase = ws.getRandomWordListByEntropy(TESTSTRENGTH, drbg);
 			if (passphrase == null) {
-				System.err.println("WordSet test 3, error, passphrase null");
+				debug.info("WordSet test 3, error, passphrase null");
 			} else {
 				StringJoiner joiner = new StringJoiner(" ");
 				for (String w : passphrase) {
 					joiner.add(w);
 				}
-				System.err.println("WordSet test 3, passphrase: " + joiner.toString());
+				debug.info("WordSet test 3, passphrase: " + joiner.toString());
 			}
 		}
 
@@ -504,13 +506,13 @@ public class WordSet {
 		for (ix = 0; ix < TESTCNT; ix++) {
 			passphrase = ws.getRandomWordListByEntropy(TESTSTRENGTH, drbg);
 			if (passphrase == null) {
-				System.err.println("WordSet test 3, error, passphrase null");
+				debug.info("WordSet test 3, error, passphrase null");
 			} else {
 				StringJoiner joiner = new StringJoiner(" ");
 				for (String w : passphrase) {
 					joiner.add(ws.randomUpcase(w, ruc, drbg));
 				}
-				System.err.println("WordSet test 4, passphrase: " + joiner.toString());
+				debug.info("WordSet test 4, passphrase: " + joiner.toString());
 			}
 		}
 

@@ -22,7 +22,7 @@ import javax.crypto.spec.SecretKeySpec;
  * KeyWrapper is a class that encrypts a generated hexadecimal key using 256 bit
  * AES encryption key derived from random password. Saves encrypted key as .enc
  * file.
- * 
+ *
  * @author amsagos
  */
 

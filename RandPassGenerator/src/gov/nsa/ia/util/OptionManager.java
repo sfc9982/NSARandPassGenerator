@@ -1,6 +1,7 @@
 package gov.nsa.ia.util;
 
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 /**
  * OptionManager is a simple class to parse command-line options and return
@@ -11,6 +12,7 @@ import java.util.TreeMap;
  */
 
 public class OptionManager {
+	private static final Logger debug = Log.getLogger(OptionManager.class.getName());
 
 	class Option {
 		/** false if this is a boolean option that takes no value argument */
@@ -24,7 +26,7 @@ public class OptionManager {
 		String opt;
 		/** default value string, if any */
 		String defaultValue;
-	};
+	}
 
 	/**
 	 * Option string map
@@ -45,9 +47,9 @@ public class OptionManager {
 	 * Create an empty OptionManager object
 	 */
 	public OptionManager() {
-		map = new TreeMap<String, Option>();
-		optmap = new TreeMap<String, String>();
-		values = new TreeMap<String, String>();
+		map = new TreeMap<>();
+		optmap = new TreeMap<>();
+		values = new TreeMap<>();
 	}
 
 	/**
@@ -74,7 +76,7 @@ public class OptionManager {
 
 	/**
 	 * Add an alias for an option
-	 * 
+	 *
 	 * @param nam Name of a previously added option
 	 * @param opt another option value that should map to that name
 	 */
@@ -154,7 +156,7 @@ public class OptionManager {
 		try {
 			ival = Integer.parseInt(val);
 		} catch (Exception e) {
-			System.err.println("Option " + name + " invalid integer given.");
+			debug.info("Option " + name + " invalid integer given.");
 		}
 
 		return ival;
@@ -210,7 +212,7 @@ public class OptionManager {
 			nam = optmap.get(arg);
 			if (nam == null) {
 				errcnt += 1;
-				System.err.println("Unrecognized option: " + arg);
+				debug.info("Unrecognized option: " + arg);
 			} else {
 				o = map.get(nam);
 				val = "";
@@ -219,7 +221,7 @@ public class OptionManager {
 					i = i + 1;
 					if (i >= args.length) {
 						errcnt += 1;
-						System.err.println("Option " + arg + " required value missing");
+						debug.info("Option " + arg + " required value missing");
 					} else {
 						val = args[i];
 					}
@@ -249,14 +251,14 @@ public class OptionManager {
 		mgr.addOption("verbose", "Print verbose message", false, "-v", null);
 
 		if (args.length == 0) {
-			System.err.println("Usage:");
+			debug.info("Usage:");
 			String usage = mgr.generateUsageText();
-			System.err.println(usage);
+			debug.info(usage);
 		} else {
 			int errs;
 			errs = mgr.parseOptions(args);
 			if (errs > 0) {
-				System.err.println("Option errors: " + errs);
+				debug.info("Option errors: " + errs);
 			}
 
 			String fileVal;
@@ -267,9 +269,9 @@ public class OptionManager {
 			sizeVal = mgr.getValueAsInt("size");
 			verboseVal = mgr.getValueAsBoolean("verbose");
 
-			System.err.println("File option value: " + fileVal);
-			System.err.println("Size option value: " + sizeVal);
-			System.err.println("Verbose option value: " + verboseVal);
+			debug.info("File option value: " + fileVal);
+			debug.info("Size option value: " + sizeVal);
+			debug.info("Verbose option value: " + verboseVal);
 
 		}
 	}

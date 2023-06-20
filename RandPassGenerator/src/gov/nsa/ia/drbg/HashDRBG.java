@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import gov.nsa.ia.util.Hash;
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.LousyEntropySource;
 
 /**
@@ -17,10 +18,11 @@ import gov.nsa.ia.util.LousyEntropySource;
  * section 10. It uses the Hash class to do its hashing, choosing a particular
  * algorithm based on the requested strength. (Note that, as per SP800-57, the
  * strength is half the hash size.)
- * 
+ *
  * @author nziring
  */
 public class HashDRBG extends AbstractDRBG {
+	private static final Logger debug = Log.getLogger(HashDRBG.class.getName());
 	/**
 	 * Absolute max supported strength this class will accept
 	 */
@@ -87,7 +89,7 @@ public class HashDRBG extends AbstractDRBG {
 	/**
 	 * Basic constructor for the HashDRBG. This method does very little, the
 	 * instantiate() method must be called before the HashDRBG will be usable.
-	 * 
+	 *
 	 * @param handle the name of this DRBG instance
 	 * @param s      the primary entropy source to be used
 	 */
@@ -108,7 +110,7 @@ public class HashDRBG extends AbstractDRBG {
 	 * predictionResistance parameter is set but the DRBG instantiation did not
 	 * request prediction resistance capabilities (odd behavior, but mandated by
 	 * SP800-90).
-	 * 
+	 *
 	 * @see gov.nsa.ia.drbg.DRBG
 	 * @param numBytes             number of bytes of output requested (SP800-90
 	 *                             output bits)
@@ -120,6 +122,7 @@ public class HashDRBG extends AbstractDRBG {
 	 *                             numBytes long
 	 * @return STATUS_SUCCESS (0) on success, non-zero status otherwise
 	 */
+	@Override
 	public synchronized int generate(int numBytes, int requestedStrength, boolean predictionResistance,
 			byte[] additionalInput, byte[] output) {
 		if (!instantiated) {
@@ -211,7 +214,7 @@ public class HashDRBG extends AbstractDRBG {
 
 	/**
 	 * Implementation of Hashgen function from SP800-90 section 10.1.1.4
-	 * 
+	 *
 	 * @param numBytes number of output bytes requested
 	 * @param output   output buffer, must be at least numBytes long, at most
 	 *                 numBytes bytes will be written into this buffer
@@ -232,9 +235,7 @@ public class HashDRBG extends AbstractDRBG {
 			if (h.reset() != STATUS_SUCCESS)
 				return STATUS_ERROR;
 			byte[] databuf = pbi2ba(data);
-			if (h.update(databuf) != STATUS_SUCCESS)
-				return STATUS_ERROR;
-			if (h.getDigest(tmpbuf) != STATUS_SUCCESS)
+			if ((h.update(databuf) != STATUS_SUCCESS) || (h.getDigest(tmpbuf) != STATUS_SUCCESS))
 				return STATUS_ERROR;
 
 			try {
@@ -251,7 +252,7 @@ public class HashDRBG extends AbstractDRBG {
 	/**
 	 * Implementation of the instantiation functionality from SP800-90 section
 	 * 10.1.1.2.
-	 * 
+	 *
 	 * @see gov.nsa.ia.drbg.DRBG
 	 * @param requestedStrength        desired strength in bits (usually 128, 160,
 	 *                                 or 256)
@@ -262,6 +263,7 @@ public class HashDRBG extends AbstractDRBG {
 	 * @param nonce                    additional bytes of entropy to feed into hash
 	 *                                 hopper, optional
 	 */
+	@Override
 	public synchronized int instantiate(int requestedStrength, boolean predictionResistanceFlag,
 			String personalizationString, byte[] nonce) {
 		if (instantiated) {
@@ -432,9 +434,10 @@ public class HashDRBG extends AbstractDRBG {
 	/**
 	 * Reseed this DRBG from its source, also adding the given additional entropy if
 	 * supplied.
-	 * 
+	 *
 	 * @see gov.nsa.ia.drbg.DRBG#reseed(byte[])
 	 */
+	@Override
 	public synchronized int reseed(byte[] additionalInput) {
 		if (!instantiated) {
 			logWarning("returning from reseed with error because DRBG is not instantiated");
@@ -520,10 +523,11 @@ public class HashDRBG extends AbstractDRBG {
 	/**
 	 * Uninstantiate this DRBG. After this is called, the DRBG will not be usable,
 	 * but can be re-instantiated.
-	 * 
+	 *
 	 * @return STATUS_SUCCESS if uninstantiate could be completed, STATUS_ERROR if
 	 *         the drbg was in a failed or uninstantiated state already
 	 */
+	@Override
 	public synchronized int uninstantiate() {
 		if (!instantiated) {
 			logWarning("returning from uninstantiate with error because DRBG not instantiated");
@@ -558,11 +562,12 @@ public class HashDRBG extends AbstractDRBG {
 	 * <li>reseed the drbg</li>
 	 * <li>uninstantiate the drbg</li>
 	 * </ol>
-	 * 
+	 *
 	 * If this method returns true, then we can have excellent confidence that the
 	 * DRBG code is working okay. (The real quality of the random will still depend
 	 * in part on the quality of the entropy source.)
 	 */
+	@Override
 	public synchronized boolean performSelfTest() {
 		boolean ret = true;
 		int status;
@@ -633,7 +638,7 @@ public class HashDRBG extends AbstractDRBG {
 	 *
 	 */
 	private static List<HashDRBGKnownAnswerTest> initializeTests() {
-		ArrayList<HashDRBGKnownAnswerTest> ret = new ArrayList<HashDRBGKnownAnswerTest>();
+		ArrayList<HashDRBGKnownAnswerTest> ret = new ArrayList<>();
 
 		// test 1 step 1 - from line 12744 of NIST Hash_DRBG.txt, test COUNT=0
 		HashDRBGKnownAnswerTest hdkat;
@@ -850,7 +855,7 @@ public class HashDRBG extends AbstractDRBG {
 	/**
 	 * Check that output buffer was actually overwritten with data, return false if
 	 * buffer is still all zeros.
-	 * 
+	 *
 	 * @param buf byte buffer of supposedly random data
 	 * @return true if buf is not all zeros
 	 */
@@ -876,7 +881,7 @@ public class HashDRBG extends AbstractDRBG {
 	/**
 	 * This utility method converts a byte buffer into a human-readable string
 	 * representation.
-	 * 
+	 *
 	 * @param buf input buffer of bytes
 	 * @return a String suitable for printing
 	 */
@@ -887,7 +892,7 @@ public class HashDRBG extends AbstractDRBG {
 
 		sb.append('[');
 		for (i = 0; i < buf.length; i++) {
-			b = (int) buf[i] & 0x0ff;
+			b = buf[i] & 0x0ff;
 			if (b < 16)
 				sb.append('0');
 			sb.append(Integer.toHexString(b));
@@ -908,7 +913,7 @@ public class HashDRBG extends AbstractDRBG {
 		log.setLevel(Level.FINEST);
 
 		boolean result;
-		System.err.println("Starting usual startup tests.");
+		debug.info("Starting usual startup tests.");
 
 		result = HashDRBG.performKnownAnswerTests(log);
 		log.info("HashDRBG Test 1: performKnownAnswerTests result: " + result);
@@ -927,58 +932,58 @@ public class HashDRBG extends AbstractDRBG {
 		if (args.length > 0) {
 			byte[] output;
 			output = new byte[16];
-			System.err.println("Additional testing");
+			debug.info("Additional testing");
 			rnd = new HashDRBG("tester2", lsrc);
 
 			int status;
 			status = rnd.instantiate(256, false, args[0], "foobarxxxxxx".getBytes());
 			if (status == STATUS_SUCCESS) {
-				System.err.println("instantiate succeeded.");
+				debug.info("instantiate succeeded.");
 			} else {
-				System.err.println("instantiate failed.");
+				debug.info("instantiate failed.");
 			}
 
 			Integer testint;
 			testint = rnd.generateInteger(0);
-			System.err.println("Generated random integer: " + testint);
+			debug.info("Generated random integer: " + testint);
 			testint = rnd.generateInteger(0);
-			System.err.println("Generated random integer: " + testint);
+			debug.info("Generated random integer: " + testint);
 			testint = rnd.generateInteger(0);
-			System.err.println("Generated random integer: " + testint);
+			debug.info("Generated random integer: " + testint);
 
 			testint = rnd.generateIntegerAtSize(0, 3);
-			System.err.println("Generated random 3-byte integer: " + testint);
+			debug.info("Generated random 3-byte integer: " + testint);
 			testint = rnd.generateIntegerAtSize(0, 3);
-			System.err.println("Generated random 3-byte integer: " + testint);
+			debug.info("Generated random 3-byte integer: " + testint);
 			testint = rnd.generateIntegerAtSize(0, 3);
-			System.err.println("Generated random 3-byte integer: " + testint);
+			debug.info("Generated random 3-byte integer: " + testint);
 
 			testint = rnd.generateIntegerAtSize(0, 2);
-			System.err.println("Generated random 2-byte integer: " + testint);
+			debug.info("Generated random 2-byte integer: " + testint);
 			testint = rnd.generateIntegerAtSize(0, 2);
-			System.err.println("Generated random 2-byte integer: " + testint);
+			debug.info("Generated random 2-byte integer: " + testint);
 			testint = rnd.generateIntegerAtSize(0, 2);
-			System.err.println("Generated random 2-byte integer: " + testint);
+			debug.info("Generated random 2-byte integer: " + testint);
 
 			status = rnd.generate(16, 256, false, null, output);
 			if (status == STATUS_SUCCESS) {
-				System.err.println("generate succeeded.");
+				debug.info("generate succeeded.");
 			} else {
-				System.err.println("generate failed.");
+				debug.info("generate failed.");
 			}
 
 			output = new byte[164];
 			status = rnd.generate(164, 256, false, null, output);
 			if (status == STATUS_SUCCESS) {
-				System.err.println("generate 2 succeeded.");
+				debug.info("generate 2 succeeded.");
 			} else {
-				System.err.println("generate 2 failed.");
+				debug.info("generate 2 failed.");
 			}
 			double chisq;
 			chisq = EntropyUtil.chiSquaredStatistic(output, output.length, 3);
-			System.err.println("Chi-squared statistic for 3 bit chunks = " + chisq);
+			debug.info("Chi-squared statistic for 3 bit chunks = " + chisq);
 			chisq = EntropyUtil.chiSquaredStatistic(output, output.length, 4);
-			System.err.println("Chi-squared statistic for 4 bit chunks = " + chisq);
+			debug.info("Chi-squared statistic for 4 bit chunks = " + chisq);
 
 			int intbuf[];
 			int ibx, ibxlim;
@@ -989,24 +994,24 @@ public class HashDRBG extends AbstractDRBG {
 				ir = rnd.generateIntegerAtSize(0, 2);
 				intbuf[ibx] = ir.intValue();
 			}
-			System.err.println("Generated " + ibxlim + " random 2-byte integers.");
+			debug.info("Generated " + ibxlim + " random 2-byte integers.");
 			double tbentropy;
 			tbentropy = EntropyUtil.computeShortEntropy(intbuf, ibxlim);
-			System.err.println("short entropy of int sample: " + tbentropy);
+			debug.info("short entropy of int sample: " + tbentropy);
 
 			status = rnd.reseed("self-test-2".getBytes());
 			if (status == STATUS_SUCCESS) {
-				System.err.println("reseed succeeded.");
+				debug.info("reseed succeeded.");
 			} else {
-				System.err.println("reseed failed.");
+				debug.info("reseed failed.");
 			}
 			status = rnd.uninstantiate();
 			if (status == STATUS_SUCCESS) {
-				System.err.println("uninstantiate succeeded.");
+				debug.info("uninstantiate succeeded.");
 			} else {
-				System.err.println("uninstantiate failed.");
+				debug.info("uninstantiate failed.");
 			}
-			System.err.println("Rng reports okay " + rnd.isOkay());
+			debug.info("Rng reports okay " + rnd.isOkay());
 		}
 
 	}

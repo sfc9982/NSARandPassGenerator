@@ -8,6 +8,7 @@ import gov.nsa.ia.drbg.DRBGConstants;
 import gov.nsa.ia.drbg.EntropySource;
 import gov.nsa.ia.drbg.EntropyUtil;
 import gov.nsa.ia.drbg.HashDRBG;
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.LousyEntropySource;
 
 /**
@@ -26,6 +27,8 @@ public class HexKeyGen {
 	// error messages
 	private Logger log;
 
+	private static final Logger debug = Log.getLogger(HexKeyGen.class.getName());
+
 	/**
 	 * Initialize a HexKeyGen object with a logger.
 	 */
@@ -36,7 +39,7 @@ public class HexKeyGen {
 	/**
 	 * Generate a key of the specified length in bits. If the requested strength is
 	 * beyond the base strength of the DRBG, returns null.
-	 * 
+	 *
 	 * @param strength key strength in bits, must be positive multiple of 8, usually
 	 *                 128, 160, or 256
 	 * @param drbg     Usable AbstractDRBG, already instantiated
@@ -45,19 +48,19 @@ public class HexKeyGen {
 	public String generateKey(int strength, AbstractDRBG drbg) {
 		if (strength < 1) {
 			log.warning("CharacterSet - bad strength value given, 0 or negative, returning null.");
-			System.err.println("Error - bad strength value given, 0 or negative.");
+			debug.info("Error - bad strength value given, 0 or negative.");
 			return null;
 		}
 		if (strength > (drbg.getStrength() * 2)) {
 			log.warning("CharacterSet - strength request " + strength + " is greater than twice DRBG's hash size of "
 					+ drbg.getStrength() + ", returning null.");
-			System.err.println("Error - strength request " + strength + " is greater than twice DRBG's hash size of "
+			debug.info("Error - strength request " + strength + " is greater than twice DRBG's hash size of "
 					+ drbg.getStrength() + ".");
 			return null;
 		}
 		if (((strength / 8) * 8) != strength) {
 			log.warning("HexKeyGen - strength request " + strength + " must be a multiple of 8");
-			System.err.println("Error - strength request " + strength + " must be a multiple of 8");
+			debug.info("Error - strength request " + strength + " must be a multiple of 8");
 			return null;
 		}
 
@@ -148,21 +151,21 @@ public class HexKeyGen {
 		kg = new HexKeyGen(log);
 		for (ix = 0; ix < TESTCNT; ix++) {
 			key = kg.generateKey(128, drbg);
-			System.err.println("Test " + testno + " key " + ix + ": " + key);
+			debug.info("Test " + testno + " key " + ix + ": " + key);
 		}
 
 		// test 2 - 160-bit keys
 		testno = 2;
 		for (ix = 0; ix < TESTCNT; ix++) {
 			key = kg.generateKey(160, drbg);
-			System.err.println("Test " + testno + " key " + ix + ": " + key);
+			debug.info("Test " + testno + " key " + ix + ": " + key);
 		}
 
 		// test 2 - 256-bit keys
 		testno = 3;
 		for (ix = 0; ix < TESTCNT; ix++) {
 			key = kg.generateKey(256, drbg);
-			System.err.println("Test " + testno + " key " + ix + ": " + key);
+			debug.info("Test " + testno + " key " + ix + ": " + key);
 		}
 
 		drbg.uninstantiate();

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.SelfTestable;
 
 /**
@@ -22,6 +23,8 @@ import gov.nsa.ia.util.SelfTestable;
  * filesystem files.
  */
 public class FileEntropySource implements EntropySource, SelfTestable {
+	private static final Logger debug = Log.getLogger(FileEntropySource.class.getName());
+
 	/**
 	 * File from which to read some entropy
 	 */
@@ -46,7 +49,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 
 	/**
 	 * Create this EntropySource object for reading from a given file.
-	 * 
+	 *
 	 * @param filename      path to the file to read bits from
 	 * @param blksiz        number of bytes per block to be read from file
 	 * @param bitsEntPerBlk number of bits of entropy expected from each block
@@ -72,6 +75,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	/**
 	 * Return a good string representation of this entropy source, for debugging
 	 */
+	@Override
 	public String toString() {
 		StringBuffer sb;
 		sb = new StringBuffer();
@@ -115,14 +119,15 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	 * returned. This EntropySource uses the requestedEntropyBits to compute how
 	 * many blocks to read, but does not guarantee to actually deliver that much
 	 * entropy because it may not be able to read that much data from the source.
-	 * 
+	 *
 	 * @param requestedEntropy amount of entropy desired, in bits
 	 * @param minOutputBytes   minimum amount of output caller will accept, in
 	 *                         bytes, usually reqEntropy/8
 	 * @param maxOutputBytes   this parameter is ignored in this implementation
-	 * 
+	 *
 	 * @return byte array containing entropy (STATUS_SUCCESS) or null (STATUS_ERROR)
 	 */
+	@Override
 	public byte[] getEntropy(int requestedEntropyBits, int minOutputBytes, int maxOutputBytes) {
 		ByteArrayOutputStream baos;
 		BufferedInputStream bis;
@@ -167,6 +172,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	/**
 	 * Release any resources that we hold, currently none.
 	 */
+	@Override
 	public void dispose() {
 		return;
 	}
@@ -174,9 +180,10 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	/**
 	 * This implementation of EntropySource does not support returning entropy
 	 * gathered during self-test. This method always returns null.
-	 * 
+	 *
 	 * @return null
 	 */
+	@Override
 	public byte[] getSelfTestEntropy() {
 		return null;
 	}
@@ -202,13 +209,13 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 		total = blks * blockSize;
 		strength = rbg.getStrength();
 		if (strength <= 0) {
-			System.err.println("Strength <= 0, cannot save");
+			debug.info("Strength <= 0, cannot save");
 			return false;
 		}
 
 		if (destination == null) {
 			// writing entropy disabled, return false
-			System.err.println("destination is null, cannot save");
+			debug.info("destination is null, cannot save");
 			return false;
 		}
 
@@ -230,7 +237,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 					}
 				}
 		} else {
-			System.err.println("DRBG generate called failed, cannot save.");
+			debug.info("DRBG generate called failed, cannot save.");
 		}
 
 		return ret;
@@ -259,6 +266,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	 *
 	 * @return true on success, false on failure
 	 */
+	@Override
 	public boolean performSelfTest() {
 		byte[] ret;
 
@@ -303,7 +311,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	 * be specified on the command-line. Each file is treated as a test of the
 	 * FileEntropySource, but if more than one file is given then the last file is
 	 * treated specially, and is used for an output test.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
@@ -313,24 +321,24 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 		boolean result;
 
 		if (args.length < 1) {
-			System.err.println("Usage: java FileEntropySource infile1 infile2 ... outfile");
+			debug.info("Usage: java FileEntropySource infile1 infile2 ... outfile");
 		}
 
 		for (i = 0; i < args.length; i++) {
 			if (i == 0 || i < (args.length - 1)) {
 				// input test
-				System.err.println("Creating FileEntropySource for " + args[i]);
+				debug.info("Creating FileEntropySource for " + args[i]);
 				src = new FileEntropySource(args[i], 16, 20); // wild guess at bitsEntPerBlk
-				System.err.println("Performing self-test..");
+				debug.info("Performing self-test..");
 				result = src.performSelfTest();
 				if (result) {
-					System.err.println("Self-test passed.");
+					debug.info("Self-test passed.");
 				} else {
-					System.err.println("Self-test failed, code=" + src.getSelfTestFailureMsg());
+					debug.info("Self-test failed, code=" + src.getSelfTestFailureMsg());
 				}
 			} else {
 				// output test
-				System.err.println("About to perform output test on " + args[i]);
+				debug.info("About to perform output test on " + args[i]);
 
 				Logger log;
 				log = Logger.getLogger("DRBG-FileEntropySource-test");
@@ -342,7 +350,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 					log.info("Creating Unix /dev/random entropy source.");
 					esrc = new UnixDevRandomEntropySource();
 				} catch (IOException e) {
-					System.err.println("Unable to create /dev/random entropy source for output test");
+					debug.info("Unable to create /dev/random entropy source for output test");
 					e.printStackTrace();
 					System.exit(1);
 				}
@@ -351,27 +359,27 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 				rbg.setLogger(log);
 				status = rbg.instantiate(256, false, "file entropy source self-test", null);
 				if (status != DRBGConstants.STATUS_SUCCESS) {
-					System.err.println("Unable to create DRBG, good-bye.");
+					debug.info("Unable to create DRBG, good-bye.");
 					System.exit(2);
 				} else {
 					log.info("Created and instantiated DRBG okay");
 				}
-				System.err.println("Created necessary support DRBG (str=" + rbg.getStrength()
+				debug.info("Created necessary support DRBG (str=" + rbg.getStrength()
 						+ "), creating FileEntropySource for " + args[i]);
 
 				src = new FileEntropySource(args[i], 16, 20);
-				System.err.println("About to attempt to get random from the DRBG and save some entropy...");
+				debug.info("About to attempt to get random from the DRBG and save some entropy...");
 				result = false;
 				try {
 					result = src.saveEntropy(rbg, 200);
 				} catch (IOException ie4) {
-					System.err.println("IO error on saving entropy: " + ie4);
+					debug.info("IO error on saving entropy: " + ie4);
 					ie4.printStackTrace();
 				}
 				if (result) {
-					System.err.println("done, saved 200 blocks to " + args[i]);
+					debug.info("done, saved 200 blocks to " + args[i]);
 				} else {
-					System.err.println("failed, unable to save entropy to " + args[i]);
+					debug.info("failed, unable to save entropy to " + args[i]);
 				}
 			}
 

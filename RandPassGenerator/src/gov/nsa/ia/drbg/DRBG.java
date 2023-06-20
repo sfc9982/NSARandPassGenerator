@@ -7,12 +7,12 @@ import gov.nsa.ia.util.SelfTestable;
  * random bit generator according to NIST SP800-90. This is an attempt to be as
  * faithful to SP800-90 as possible, while providing reasonable support to Java
  * programmers.
- * 
+ *
  * [Note that SP800-90 mandates the notion of a DRBG entropy source, but does
  * not incorporate management of that entropy source into the basic API.
  * Therefore, this interface does not provide any methods related to the entropy
  * source; see the AbstractDRGB class for more information.]
- * 
+ *
  * @see gov.nsa.ia.drbg.AbstractDRBG
  * @author nziring
  */
@@ -20,7 +20,7 @@ public interface DRBG extends DRBGConstants, SelfTestable {
 	/**
 	 * instantiate initializes the DRBG. It must be called exactly once after
 	 * creating the object but before using it for anything else.
-	 * 
+	 *
 	 * @param requestedStrenth         desired bit strength of DRBG, usually 256 or
 	 *                                 512
 	 * @param predictionResistanceFlag whether strong prediction resistance is to be
@@ -29,7 +29,7 @@ public interface DRBG extends DRBGConstants, SelfTestable {
 	 *                                 good idea
 	 * @param nonce                    additional seed data, optional but usually a
 	 *                                 good idea
-	 * 
+	 *
 	 * @return STATUS_SUCCESS on successful initialization
 	 */
 	public int instantiate(int requestedStrength, boolean predictionResistanceFlag, String personalizationString,
@@ -49,7 +49,7 @@ public interface DRBG extends DRBGConstants, SelfTestable {
 	 * DRBG object unusable. Multiple calls are okay, but extra calls have no
 	 * effect. Implementations may choose to prohibit instantiation after
 	 * uninstantiation.
-	 * 
+	 *
 	 * @return STATUS_SUCCESS is always returned
 	 */
 	public int uninstantiate();
@@ -59,7 +59,7 @@ public interface DRBG extends DRBGConstants, SelfTestable {
 	 * additional input, if any. Note that if the DRBG has not been instantiated, or
 	 * has suffered a STATUS_CATASTROPHIC_ERROR, then this method will always return
 	 * STATUS_ERROR.
-	 * 
+	 *
 	 * @param additionalInput more entropy to push into the DRBG
 	 * @return result status, usually STATUS_SUCCESS
 	 */
@@ -87,7 +87,7 @@ public interface DRBG extends DRBGConstants, SelfTestable {
 	 *   if (status != DRBGConstants.STATUS_SUCCESS) { // do error handling }
 	 * </tt>
 	 * </p>
-	 * 
+	 *
 	 * @param requestedStrength    requested randomness bit strength (0 means
 	 *                             instantiation strength)
 	 * @param numBytes             number of bytes of random output requested (8
@@ -98,7 +98,7 @@ public interface DRBG extends DRBGConstants, SelfTestable {
 	 *                             optional
 	 * @param output               byte array for output, output.length must equal
 	 *                             or exceed numBytes
-	 * 
+	 *
 	 * @return result status, STATUS_SUCCESS if output was generated properly
 	 */
 	public int generate(int numBytes, int requestedStrength, boolean predictionResistance, byte[] additionalInput,
@@ -122,6 +122,7 @@ public interface DRBG extends DRBGConstants, SelfTestable {
 	 * because the default implementation provided by java.lang.Object does not
 	 * include anything useful.
 	 */
+	@Override
 	public String toString();
 
 }

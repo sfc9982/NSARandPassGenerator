@@ -9,7 +9,7 @@ import gov.nsa.ia.util.SelfTestable;
  * including logging support and management of a primary entropy source. Note
  * that DRBGs that extend this class should attempt to be thread-safe, but may
  * stipulate that they are not by returning false for the isThreadSafe() method.
- * 
+ *
  * @author nziring
  */
 
@@ -62,7 +62,7 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	/**
 	 * Logger to be used for logging messages. If this is null then no messages will
 	 * be logged.
-	 * 
+	 *
 	 * @see java.util.logging.Logger
 	 */
 	protected Logger log;
@@ -71,7 +71,7 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	 * Base class constructor for a DRBG. This accepts a handle, which is simply a
 	 * name, and a necessary entropy source. Neither of the arguments which may be
 	 * null.
-	 * 
+	 *
 	 * @param handle the name of this DRBG instance
 	 * @param s      the EntropySource for this DRBG instance
 	 */
@@ -88,7 +88,7 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	/**
 	 * Check whether this DRBG is usable at the moment. This method is not mandated
 	 * by SP800-90.
-	 * 
+	 *
 	 * @return true if the DRBG is properly instantiated and usable (non-failed)
 	 */
 	public synchronized boolean isOkay() {
@@ -102,6 +102,7 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	 * Get the instantiation bit strength of this DRBG. This will be the value
 	 * passed to the instantiate() method, or 0 if the DRBG is not instantiated.
 	 */
+	@Override
 	public synchronized int getStrength() {
 		if (!instantiated || failed)
 			return 0;
@@ -136,7 +137,7 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	 * work properly. There are several ways to implement thread-safety in Java, and
 	 * this abstract class does not force implementors to choose a particular one.
 	 * This basic implementation always returns false.
-	 * 
+	 *
 	 * @return false, by default implementations are assumed not be thread-safe
 	 */
 	public boolean isThreadSafe() {
@@ -150,19 +151,17 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	 * reseeds. This should always be called prior to generating output. If the DRBG
 	 * is not in a usable state this method always returns false. This method should
 	 * be called from subclass implementation of the generate method.
-	 * 
+	 *
 	 * @param numBytesRequested   number of bytes about to be output
 	 * @param predResistRequested whether this request needs prediction resistance
-	 * 
+	 *
 	 * @return true if a reseed is required, false otherwise
 	 */
 	protected synchronized boolean reseedRequired(boolean predResistRequested) {
 		if (!isOkay())
 			return false;
 
-		if (predResist && predResistRequested)
-			return true;
-		if (reseedCounter + 1 > maxRequestsAllowedBetweenReseeds)
+		if ((predResist && predResistRequested) || (reseedCounter + 1 > maxRequestsAllowedBetweenReseeds))
 			return true;
 		return false;
 	}
@@ -277,6 +276,7 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	/**
 	 * Return the name of this DRBG.
 	 */
+	@Override
 	public String getName() {
 		return name;
 	}

@@ -3,7 +3,9 @@ package gov.nsa.ia.drbg;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.logging.Logger;
 
+import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.SelfTestable;
 
 /**
@@ -14,10 +16,11 @@ import gov.nsa.ia.util.SelfTestable;
  *
  * This entropy source works only on Linux and Unix systems that support
  * /dev/random. If called elsewhere, it will fail.
- * 
+ *
  * @author nziring
  */
 public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
+	private static final Logger debug = Log.getLogger(UnixDevRandomEntropySource.class.getName());
 	/**
 	 * Pseudo-file from which we can get randomness created by the OS. Always use
 	 * "random" not "urandom", because "urandom" delivers bytes whether it has
@@ -74,7 +77,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 	 * the default. This is a very dangerous operation, because the given random
 	 * source does not get tested for quality. In practice, always use a
 	 * high-quality random source like /dev/random.
-	 * 
+	 *
 	 * @param randSrc path to a random source generator file
 	 */
 
@@ -94,6 +97,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 	/**
 	 * Return a string representation of this source, for debugging
 	 */
+	@Override
 	public String toString() {
 		return "UnixDevRandomEntropySource[src=" + randomSource + ",blksiz=" + BLOCK_SIZE + "]";
 	}
@@ -102,6 +106,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 	 * Dispose of this entropy-source, if we are done with it. After you've called
 	 * this, all calls to getEntropy will fail.
 	 */
+	@Override
 	public void dispose() {
 		if (rinput != null)
 			try {
@@ -122,15 +127,16 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 	 * delivered within the size limit imposed by maxOutputBytes, then STATUS_ERROR
 	 * is returned. If the dispose() method has been called on this EntropySource
 	 * object, then this method always returns null.
-	 * 
+	 *
 	 * @param requestedEntropy amount of entropy needed, in bits
 	 * @param minOutputBytes   minimum amount of output caller will accept, in
 	 *                         bytes, usually reqEntropy/8
 	 * @param maxOutputBytes   maximum amount of output caller will accept, 0 for
 	 *                         unlimited
-	 * 
+	 *
 	 * @return byte array containing entropy (STATUS_SUCCESS) or null (STATUS_ERROR)
 	 */
+	@Override
 	public byte[] getEntropy(int requestedEntropyBits, int minOutputBytes, int maxOutputBytes) {
 		byte[] ret;
 		int blocks, tot, cc, bytes;
@@ -180,6 +186,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 	 *
 	 * @return true on success, false on failure
 	 */
+	@Override
 	public boolean performSelfTest() {
 		byte[] ret;
 
@@ -190,9 +197,7 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 
 		// case 2 - should return a byte array of two blocks
 		ret = getEntropy(256, BLOCK_SIZE, BLOCK_SIZE * 2);
-		if (ret.length != (BLOCK_SIZE * 2))
-			return false;
-		if (!EntropyUtil.checkByteEntropy(ret, ret.length, 4.0))
+		if ((ret.length != (BLOCK_SIZE * 2)) || !EntropyUtil.checkByteEntropy(ret, ret.length, 4.0))
 			return false;
 
 		savedSelfTestEntropy = ret;
@@ -209,24 +214,24 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 				return false;
 			double chisq;
 			chisq = EntropyUtil.chiSquaredStatistic(ret, ret.length, 2);
-			System.err.println("DEBUG***1a - chisq for 2 bit chunks = " + chisq);
+			debug.info("DEBUG***1a - chisq for 2 bit chunks = " + chisq);
 			if (!EntropyUtil.testChiSquared(chisq, 2)) {
-				System.err.println("DEBUG***1d - chisq would fail for 2 bits");
+				debug.info("DEBUG***1d - chisq would fail for 2 bits");
 			}
 			chisq = EntropyUtil.chiSquaredStatistic(ret, ret.length, 3);
-			System.err.println("DEBUG***1a - chisq for 3 bit chunks = " + chisq);
+			debug.info("DEBUG***1a - chisq for 3 bit chunks = " + chisq);
 			if (!EntropyUtil.testChiSquared(chisq, 3)) {
-				System.err.println("DEBUG***1d - chisq would fail for 3 bits");
+				debug.info("DEBUG***1d - chisq would fail for 3 bits");
 			}
 			chisq = EntropyUtil.chiSquaredStatistic(ret, ret.length, 4);
-			System.err.println("DEBUG***1b - chisq for 4 bit chunks = " + chisq);
+			debug.info("DEBUG***1b - chisq for 4 bit chunks = " + chisq);
 			if (!EntropyUtil.testChiSquared(chisq, 4)) {
-				System.err.println("DEBUG***1d - chisq would fail for 4 bits");
+				debug.info("DEBUG***1d - chisq would fail for 4 bits");
 			}
 			chisq = EntropyUtil.chiSquaredStatistic(ret, ret.length, 5);
-			System.err.println("DEBUG***1c - chisq for 5 bit chunks = " + chisq);
+			debug.info("DEBUG***1c - chisq for 5 bit chunks = " + chisq);
 			if (!EntropyUtil.testChiSquared(chisq, 5)) {
-				System.err.println("DEBUG***1d - chisq would fail for 5 bits");
+				debug.info("DEBUG***1d - chisq would fail for 5 bits");
 			}
 
 		}
@@ -241,9 +246,10 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 	 * EntropyUtil.checkByteEntropy that its entropy is at least 4 bits per byte. If
 	 * performSelfTest has not been called, or if the self-test failed, or if
 	 * dispose has been called, then this method will return null.
-	 * 
+	 *
 	 * @return byte array containing entropy from self-test, or null
 	 */
+	@Override
 	public byte[] getSelfTestEntropy() {
 		if (passedSelfTest && savedSelfTestEntropy != null) {
 			byte copy[];
@@ -268,22 +274,22 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 		double h;
 
 		if (args.length > 0) {
-			System.err.println("Non-empty list of command-line args supplied.");
-			System.err.println("Setting up additional self-test.");
+			debug.info("Non-empty list of command-line args supplied.");
+			debug.info("Setting up additional self-test.");
 			LARGE_SELF_TEST = true;
 		}
 
 		try {
-			System.err.println("About to call self-test method.");
+			debug.info("About to call self-test method.");
 			rsrc = new UnixDevRandomEntropySource();
 			if (rsrc.performSelfTest()) {
-				System.err.println("Self-Test Passed!");
+				debug.info("Self-Test Passed!");
 			} else {
-				System.err.println("Self-test failed.");
+				debug.info("Self-test failed.");
 				System.exit(1);
 			}
 		} catch (IOException ie2) {
-			System.err.println("Error creating random source: " + ie2);
+			debug.info("Error creating random source: " + ie2);
 			ie2.printStackTrace();
 		}
 
@@ -291,13 +297,13 @@ public class UnixDevRandomEntropySource implements EntropySource, SelfTestable {
 			rsrc = new UnixDevRandomEntropySource(((args.length > 0) ? (args[0]) : (null)));
 			for (i = 0; i < TEST_SIZES.length; i++) {
 				output = rsrc.getEntropy(TEST_SIZES[i], TEST_SIZES[i] / 8, 0);
-				System.err.println("Test at size " + TEST_SIZES[i] + " returns array of " + output.length + " bytes.");
+				debug.info("Test at size " + TEST_SIZES[i] + " returns array of " + output.length + " bytes.");
 				h = EntropyUtil.computeByteEntropy(output, output.length);
-				System.err.println("    byte entropy = " + h + " bits");
+				debug.info("    byte entropy = " + h + " bits");
 			}
 			rsrc.dispose();
 		} catch (IOException ie) {
-			System.err.println("Error creating random source: " + ie);
+			debug.info("Error creating random source: " + ie);
 			ie.printStackTrace();
 		}
 
