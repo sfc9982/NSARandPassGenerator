@@ -129,6 +129,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 	 * BigInteger to bytes in the default manner, which is usually wrong. Do the
 	 * conversion yourself instead.
 	 */
+	@SuppressWarnings("unused")
 	private int update(BigInteger bi) {
 		md.update(bi.toByteArray());
 		return STATUS_SUCCESS;
@@ -280,7 +281,8 @@ public class Hash implements DRBGConstants, SelfTestable {
 				return false;
 			}
 			result = new byte[h.getDigestSize()];
-			if ((h.getDigest(result) != STATUS_SUCCESS) || !java.util.Arrays.equals(result, test_outputs[i]) || (h.reset() != STATUS_SUCCESS)) {
+			if ((h.getDigest(result) != STATUS_SUCCESS) || !java.util.Arrays.equals(result, test_outputs[i])
+					|| (h.reset() != STATUS_SUCCESS)) {
 				return false;
 			}
 
