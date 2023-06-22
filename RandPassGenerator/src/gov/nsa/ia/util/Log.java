@@ -24,7 +24,7 @@ public class Log {
 	 * @return logger ready to use
 	 */
 	public static Logger getLogger(String className) {
-		Logger retLog = Logger.getLogger(className);
+		Logger retLogger = Logger.getLogger(className);
 
 		ConsoleHandler handler = new ConsoleHandler();
 		handler.setFormatter(new SimpleFormatter() {
@@ -36,10 +36,17 @@ public class Log {
 			}
 
 		});
-		retLog.setUseParentHandlers(false);
-		retLog.addHandler(handler);
+		retLogger.setUseParentHandlers(false);
+		retLogger.addHandler(handler);
 
-		return retLog;
+		return retLogger;
+	}
+
+	public static Logger getMute() {
+		Logger retLogger = Logger.getLogger("Mute");
+		retLogger.setLevel(Level.OFF);
+
+		return retLogger;
 	}
 
 	/**
