@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import gov.nsa.ia.drbg.AbstractDRBG;
 import gov.nsa.ia.drbg.EntropySource;
 import gov.nsa.ia.drbg.JavaSecRandEntropySource;
@@ -14,15 +15,32 @@ public class BashGenerator {
 
 	private static final Logger debugLog = Log.getLogger(BashGenerator.class.getName());
 
+	public static void generateBashFormat(int strength, String userList) {
+		BashGenerator bg = new BashGenerator();
+		String[] users = userList.split(" ");
+		int count = users.length;
+
+		bg.usernames = new ArrayList<>(Arrays.asList(users));
+		bg.generatePasswords(count, strength);
+
+		bg.printCredentials();
+		bg.printBash();
+	}
+
+	public static void main(String[] args) {
+		debugLog.log(Level.INFO, "Start Bash generation test");
+		generateBashFormat(160, "Tom Jerry UncleSam foo bar");
+	}
+
+	private static void message(String s) {
+		debugLog.info(s);
+	}
+
 	private RandManager randman;
 
 	private ArrayList<String> usernames;
 
 	private ArrayList<String> passwords;
-
-	private static void message(String s) {
-		debugLog.info(s);
-	}
 
 	/**
 	 * Initialize this RandPassGenerator using the supplied log file and the
@@ -36,7 +54,7 @@ public class BashGenerator {
 	public BashGenerator() {
 		boolean die = false;
 
-		randman = new RandManager("RandPassGenToBash", debugLog);
+		randman = new RandManager("RandPassGenToBash", Log.getMute());
 
 		EntropySource primarysrc = null;
 
@@ -77,41 +95,6 @@ public class BashGenerator {
 		if (die) {
 			throw new RuntimeException("Error in RandPassGen startup.");
 		}
-	}
-
-	private void printBash() {
-		String bashUpper;
-		String bashLower;
-
-		StringBuilder userlist = new StringBuilder(" ");
-		StringBuilder passlist = new StringBuilder(" ");
-
-		bashUpper = "#!/bin/bash" + "\r\n";
-		bashLower = "num_users=${#user_list[@]}\r\n" + "num_passwords=${#password_list[@]}" + "\r\n"
-				+ "if [ $num_users -ne $num_passwords ]\r\n" + "then\r\n"
-				+ "    echo \"Error: Number of users and passwords does not match\"\r\n" + "    exit 1\r\n" + "fi"
-				+ "\r\n" + "for (( i=0; i<${num_users}; i++ ))\r\n" + "do\r\n" + "    useradd ${user_list[$i]}\r\n"
-				+ "    echo \"${user_list[$i]}:${password_list[$i]}\" | chpasswd\r\n" + "done";
-
-		message("Print credentials to console");
-
-		if (usernames.size() != passwords.size()) {
-			debugLog.warning("username and password list's size don't match");
-			return;
-		}
-
-		for (String user : usernames) {
-			userlist.append("\"" + user + "\"" + " ");
-		}
-
-		for (String pass : passwords) {
-			passlist.append("\"" + pass + "\"" + " ");
-		}
-
-		System.out.print(bashUpper);
-		System.out.printf("user_list=(%s)%n", userlist);
-		System.out.printf("password_list=(%s)%n", passlist);
-		System.out.print(bashLower);
 	}
 
 	private int generatePasswords(int count, int strength) {
@@ -168,12 +151,52 @@ public class BashGenerator {
 		return passes.size();
 	}
 
-	public static void main(String[] args) {
-		debugLog.log(Level.INFO, "Start Bash generation test");
-		BashGenerator bg = new BashGenerator();
-		bg.generatePasswords(2, 160);
-		bg.usernames = new ArrayList<>(Arrays.asList("Tom", "Jerry"));
-		bg.printBash();
+	private void printBash() {
+		String bashUpper;
+		String bashLower;
+
+		StringBuilder userlist = new StringBuilder(" ");
+		StringBuilder passlist = new StringBuilder(" ");
+
+		bashUpper = "\r\n" + "#!/bin/bash" + "\r\n";
+		bashLower = "num_users=${#user_list[@]}\r\n" + "num_passwords=${#password_list[@]}" + "\r\n"
+				+ "if [ $num_users -ne $num_passwords ]\r\n" + "then\r\n"
+				+ "    echo \"Error: Number of users and passwords does not match\"\r\n" + "    exit 1\r\n" + "fi"
+				+ "\r\n" + "for (( i=0; i<${num_users}; i++ ))\r\n" + "do\r\n" + "    useradd ${user_list[$i]}\r\n"
+				+ "    echo \"${user_list[$i]}:${password_list[$i]}\" | chpasswd\r\n" + "done" + "\r\n" + "\r\n";
+
+		message("Print credentials to console");
+
+		if (usernames.size() != passwords.size()) {
+			debugLog.warning("username and password list's size don't match");
+			return;
+		}
+
+		for (String user : usernames) {
+			userlist.append("\"" + user + "\"" + " ");
+		}
+
+		for (String pass : passwords) {
+			passlist.append("\"" + pass + "\"" + " ");
+		}
+
+		System.out.print(bashUpper);
+		System.out.printf("user_list=(%s)%n", userlist);
+		System.out.printf("password_list=(%s)%n", passlist);
+		System.out.print(bashLower);
+	}
+
+	private void printCredentials() {
+
+		if (usernames.size() != passwords.size()) {
+			debugLog.warning("Credential size doesn't match!");
+			return;
+		}
+
+		for (int i = 0; i < usernames.size(); i++) {
+			System.out.printf("%s:%s%n", usernames.get(i), passwords.get(i));
+		}
+
 	}
 
 }

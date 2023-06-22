@@ -29,6 +29,7 @@ import gov.nsa.ia.util.KeyUnwrapper;
 import gov.nsa.ia.util.KeyWrapper;
 import gov.nsa.ia.util.Log;
 import gov.nsa.ia.util.OptionManager;
+import gov.nsa.ia.util.BashGenerator;
 
 /**
  * This class manages the generation process for passwords, passphrases, and raw
@@ -841,6 +842,7 @@ public class RandPassGenerator {
 		ret.addOption("enc", "Encrypt each key to a file using password (only for -k)", false, "-enc", null);
 		ret.addOption("randUpcase", "For passphrases, apply uppercase randomly to first N letters of each word", true,
 				"-rcc", null);
+		ret.addOption("bash", "generate credentials into Bash-like file", true, "-bash", null);
 		return ret;
 	}
 
@@ -900,6 +902,7 @@ public class RandPassGenerator {
 		String decryptFilePath = opt.getValue("decrypt");
 		boolean enc = opt.getValueAsBoolean("enc");
 		int randUpcase = opt.getValueAsInt("randUpcase");
+		String bashOutput = opt.getValue("bash");
 
 		// check for something to do
 		if (decryptFilePath != null) {
@@ -908,7 +911,7 @@ public class RandPassGenerator {
 			decryptPrompt(decryptFilePath);
 		}
 
-		if (numKeys <= 0 && numPasswords <= 0 && numPassphrases <= 0 && numUsernames <= 0) {
+		if (numKeys <= 0 && numPasswords <= 0 && numPassphrases <= 0 && numUsernames <= 0 && bashOutput == null) {
 			debug.info("No keys, passwords, passphrases or usernames requested.  Exiting.");
 			System.exit(3);
 		}
@@ -1029,6 +1032,10 @@ public class RandPassGenerator {
 			}
 
 			rpg.close();
+		}
+
+		if (bashOutput != null) {
+			BashGenerator.generateBashFormat(strength, bashOutput);
 		}
 
 		// flush and close the output PrintWriter if necessary
