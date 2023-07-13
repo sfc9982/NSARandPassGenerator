@@ -535,8 +535,7 @@ public class RandManager implements SelfTestable {
 						System.exit(1);
 					}
 					// possibly print some of the keys here
-					debug.info(
-							"Bulk test iteration no. " + ki + " key is " + EntropyUtil.bufferToString(testkey));
+					debug.info("Bulk test iteration no. " + ki + " key is " + EntropyUtil.bufferToString(testkey));
 					debug.info("\tentropy is " + EntropyUtil.computeByteEntropy(testkey, TEST_KEY_SIZE));
 
 				}
