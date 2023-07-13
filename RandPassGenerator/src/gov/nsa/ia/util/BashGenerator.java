@@ -52,8 +52,6 @@ public class BashGenerator {
 	 * @return
 	 */
 	public BashGenerator() {
-		boolean die = false;
-
 		randman = new RandManager("RandPassGenToBash", Log.getMute());
 
 		EntropySource primarysrc = null;
@@ -64,36 +62,22 @@ public class BashGenerator {
 			randman.setPrimarySource(primarysrc);
 			randman.setStartupSource(primarysrc);
 
-			message("RandPassGen - created randomness manager, about to initialize and perform self-test");
-
-			if (randman.performDRBGKATest()) {
-				message("Random generator code known answers self-test passed.");
-				message("RandPassGen - underlying DRBG implementation known answer self-test passed.");
-			} else {
-				debugLog.severe(
-						"RandPassGen - underlying DRBG implementation known answer self-test failed!  This should never happen.  JVM broken?  Exiting.");
+			if (!randman.performDRBGKATest()) {
+				debugLog.severe("Underlying DRBG implementation known answer self-test failed.");
 				System.exit(1);
 			}
-
-			message("Initializing randomness; this will take some time if system entropy isn't full.  Be patient, or go do something else on this computer to help the system gather more entropy.  Thank you.");
-
-			if (randman.initialize()) {
-				message("RandPassGen - initialization succeeded, proceeding to self-test.");
-				if (randman.performSelfTest()) {
-					message("Random generation manager self-tests passed.");
-				} else {
-					message("Randomness self-test failed.  Exiting.");
-				}
+			if (!randman.initialize()) {
+				message("Initialization failled.");
+				System.exit(1);
+			}
+			if (!randman.performSelfTest()) {
+				message("Randomness self-test failed.");
+				System.exit(1);
 			}
 
 		} catch (Exception e) {
 			debugLog.severe("Exception in RandPassGenerator setup, fatal.");
-			message("Error in RandPassGen startup: " + e);
-			die = true;
-		}
-
-		if (die) {
-			throw new RuntimeException("Error in RandPassGen startup.");
+			message("Error in Bash Generator startup: " + e);
 		}
 	}
 
@@ -187,7 +171,6 @@ public class BashGenerator {
 	}
 
 	private void printCredentials() {
-
 		if (usernames.size() != passwords.size()) {
 			debugLog.warning("Credential size doesn't match!");
 			return;
@@ -196,7 +179,6 @@ public class BashGenerator {
 		for (int i = 0; i < usernames.size(); i++) {
 			System.out.printf("%s:%s%n", usernames.get(i), passwords.get(i));
 		}
-
 	}
 
 }
