@@ -94,16 +94,13 @@ public class BashGenerator {
 		drbg = randman.getDRBG();
 
 		if (!(drbg.isOkay())) {
-			debugLog.severe("RandPassGen - DRBG is not ok, error");
-			message("Error - DRBG is not usable, sorry.");
+			debugLog.severe("DRBG is not ok, error");
 			return -1;
 		}
 
 		if (strength > (drbg.getStrength() * 2)) {
-			debugLog.warning("RandPassGen - requested password strength " + strength
-					+ " is greater than hash size of underlying DRBG.  Error.");
-			message("Error - requested password strength of " + strength
-					+ " is greater than the hash size of the underlying DRBG");
+			debugLog.warning(
+					"Requested password strength " + strength + " is greater than hash size of underlying DRBG.");
 			return -1;
 		}
 
@@ -116,21 +113,21 @@ public class BashGenerator {
 		for (i = 0; i < count; i++) {
 			pass = cs.getRandomStringByEntropy(strength, drbg);
 			if (pass == null) {
-				debugLog.warning("RandPassGen - character set password generator failed!  Error.");
+				debugLog.warning("Character set password generator failed.");
 				return -1;
 			} else {
 				passes.add(pass);
 			}
 		}
 
-		message("RandPassGen - generated " + passes.size() + " passwords at strength " + strength);
+		message("Generated " + passes.size() + " passwords at strength " + strength);
 
 		passwords = passes;
 
 		for (String p : passwords) {
 			debugLog.info(p);
 		}
-		message("RandPassGen - save passwords to designated object member");
+		message("Save passwords to designated object member");
 
 		return passes.size();
 	}
