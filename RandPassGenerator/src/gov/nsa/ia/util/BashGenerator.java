@@ -21,7 +21,11 @@ public class BashGenerator {
 		int count = users.length;
 
 		bg.usernames = new ArrayList<>(Arrays.asList(users));
-		bg.generatePasswords(count, strength);
+		int retCount = bg.generatePasswords(count, strength);
+
+		if (retCount != count) {
+			debugLog.warning("Password number generated doesn't match the input");
+		}
 
 		bg.printCredentials();
 		bg.printBash();
@@ -36,20 +40,14 @@ public class BashGenerator {
 		debugLog.info(s);
 	}
 
-	private RandManager randman;
+	private final RandManager randman;
 
 	private ArrayList<String> usernames;
 
 	private ArrayList<String> passwords;
 
 	/**
-	 * Initialize this RandPassGenerator using the supplied log file and the
-	 * supplied entropy startup file.
-	 *
-	 * @param logfile Path to a writeable log file, null to log to stderr
-	 * @param pw      A usable printwriter for output, may not be null
-	 * @param verbose if true, print verbose messages
-	 * @return
+	 * Initialize this BashGenerator and its RandManager object.
 	 */
 	public BashGenerator() {
 		randman = new RandManager("RandPassGenToBash", Log.getMute());
@@ -154,11 +152,11 @@ public class BashGenerator {
 		}
 
 		for (String user : usernames) {
-			userlist.append("\"" + user + "\"" + " ");
+			userlist.append("\"").append(user).append("\"").append(" ");
 		}
 
 		for (String pass : passwords) {
-			passlist.append("\"" + pass + "\"" + " ");
+			passlist.append("\"").append(pass).append("\"").append(" ");
 		}
 
 		System.out.print(bashUpper);

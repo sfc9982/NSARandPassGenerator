@@ -27,3 +27,6 @@ hs_err_pid*
 RemoteSystemsTempFiles
 RandPassGenerator/.project
 *.prefs
+
+#IntelliJ
+RandPassGenerator/.idea
