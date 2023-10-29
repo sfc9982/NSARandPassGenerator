@@ -56,7 +56,7 @@ public class RandPassGenerator {
 	/**
 	 * Version string
 	 */
-	public static final String VERSION = "RandPassGen 1.3.4 - 7 June 2023";
+	public static final String VERSION = "RandPassGen 1.3.4 - 30 October 2023";
 
 	/**
 	 * Path of the default log file
@@ -756,7 +756,7 @@ public class RandPassGenerator {
 	 * Key File Decryption Prompt. Decrypts user provided file using user provided
 	 * password
 	 *
-	 * @param encryptedFile path to the encrypted file
+	 * @param encryptedFilePath path to the encrypted file
 	 */
 	public static void decryptPrompt(String encryptedFilePath) {
 
