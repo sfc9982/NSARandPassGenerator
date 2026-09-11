@@ -4,9 +4,11 @@ import java.io.Console;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
@@ -28,8 +30,17 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class KeyWrapper {
 
-	// 256-bit salt generated from DRNG
-	private static String saltinput = "762043c38a8e1ad1c8502ec6e53d8c503fe9b28bf73f583e4fadd5888737a5ae";
+	/**
+	 * Magic bytes identifying the encrypted file header. Followed by a 16-byte
+	 * random salt, then the AES-wrapped key bytes. Format:
+	 * [2 bytes magic "NS"] [16 bytes salt] [wrapped key].
+	 */
+	private static final byte[] MAGIC = new byte[] { 'N', 'S' };
+
+	/**
+	 * Length in bytes of the random salt written to each encrypted file header.
+	 */
+	private static final int SALT_LENGTH = 16;
 
 	public static void fileProcessor(char[] pass, String inputKey, File encryptedFile) {
 		try {
@@ -42,8 +53,9 @@ public class KeyWrapper {
 				pass = br.readPassword();
 			}
 			// DPKDF2 NIST SP 800-132
-			// salt value
-			byte[] salt = new String(saltinput).getBytes();
+			// salt value, freshly generated per encryption so it is unique
+			byte[] salt = new byte[SALT_LENGTH];
+			new SecureRandom().nextBytes(salt);
 
 			// iteration count
 			int iterCount = 100000;
@@ -62,7 +74,7 @@ public class KeyWrapper {
 
 			// setup the key encryption key and the to-be-wrapped key
 
-			byte[] newKey = new String(inputKey).getBytes();
+			byte[] newKey = inputKey.getBytes(StandardCharsets.UTF_8);
 			SecretKey WrapThisKey = new SecretKeySpec(newKey, "AES");
 
 			if (pass.length < 16) {
@@ -73,27 +85,14 @@ public class KeyWrapper {
 			}
 			byte[] outputBytes = cipher.wrap(WrapThisKey);
 			FileOutputStream outputStream = new FileOutputStream(encryptedFile);
+			outputStream.write(MAGIC);
+			outputStream.write(salt);
 			outputStream.write(outputBytes);
 
 			outputStream.close();
 		} catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IllegalBlockSizeException
 				| IOException | NoSuchProviderException | InvalidKeySpecException e) {
 			e.printStackTrace();
-		}
-	}
-
-	// test
-	private static String DATA = "6b6c315f62b0453608169c73893d8f0abe79fdf63a078d5c2bc9bdcb57fa028c";
-	private static char[] KEKPW = "9fXMi5JvoHDIGQBM9fXMi5JvoHDIGQBM".toCharArray();
-	private static File EFile = new File("test.enc");
-
-	public static void main(String[] args) {
-		try {
-			KeyWrapper.fileProcessor(KEKPW, DATA, EFile);
-			System.out.println("Test Successfull");
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			ex.printStackTrace();
 		}
 	}
 

@@ -741,10 +741,9 @@ public class RandPassGenerator {
 		Console br = System.console();
 		System.out.println("Encrypting key file " + keyfilename);
 		System.out.print("Provide a random password of at least 16 characters: ");
-		// Get the password from user.
-		String pass = null;
-		pass = br.readLine();
-		KeyWrapper.fileProcessor(pass.toCharArray(), input, encryptedFile);
+		// Get the password from user, without echoing it to the terminal.
+		char[] pass = br.readPassword();
+		KeyWrapper.fileProcessor(pass, input, encryptedFile);
 	}
 
 	/***
@@ -767,8 +766,7 @@ public class RandPassGenerator {
 		System.out.println("Decrypting key file " + encryptedFilePath);
 		System.out.print("Provide the original encryption password: ");
 
-		String pass = null;
-		pass = br.readLine();
+		char[] pass = br.readPassword();
 
 		// decrypt key file
 		File decryptedFile = new File(encryptedFilePath + "_decrypted.txt");

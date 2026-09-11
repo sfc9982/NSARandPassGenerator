@@ -1,10 +1,8 @@
 package gov.nsa.ia.util;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -31,22 +29,46 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class KeyUnwrapper {
 
-	// 256-bit salt generated from DRNG
-	private static String saltinput = "762043c38a8e1ad1c8502ec6e53d8c503fe9b28bf73f583e4fadd5888737a5ae";
+	/**
+	 * Magic bytes identifying the encrypted file header. Matches KeyWrapper's
+	 * MAGIC. Format: [2 bytes magic "NS"] [16 bytes salt] [wrapped key].
+	 */
+	private static final byte[] MAGIC = new byte[] { 'N', 'S' };
 
-	public static void fileProcessor(String PW, File encryptedFile, File decryptedFile) {
+	/**
+	 * Length in bytes of the random salt stored in the encrypted file header.
+	 */
+	private static final int SALT_LENGTH = 16;
+
+	/**
+	 * Total length of the header, magic bytes plus salt.
+	 */
+	private static final int HEADER_LENGTH = MAGIC.length + SALT_LENGTH;
+
+	public static void fileProcessor(char[] PW, File encryptedFile, File decryptedFile) {
 		try {
 
 			// DPKDF2 NIST SP 800-132
-			// salt value
-			byte[] salt = new String(saltinput).getBytes();
+			// salt value, read from the encrypted file header
+			byte[] inputBytes = new byte[(int) encryptedFile.length()];
+			try (FileInputStream inputStream = new FileInputStream(encryptedFile)) {
+				inputStream.read(inputBytes);
+			}
+
+			// validate the header magic bytes, otherwise the format is unsupported
+			if (inputBytes.length < HEADER_LENGTH || inputBytes[0] != MAGIC[0] || inputBytes[1] != MAGIC[1]) {
+				System.out.println("Not a valid encrypted key file format, failed to decrypt key");
+				return;
+			}
+			byte[] salt = new byte[SALT_LENGTH];
+			System.arraycopy(inputBytes, MAGIC.length, salt, 0, SALT_LENGTH);
 
 			// iteration count
 			int iterCount = 100000;
 
 			int derivedKeyLength = 256; // Should be at least 256 bits.
 
-			KeySpec spec = new PBEKeySpec(PW.toCharArray(), salt, iterCount, derivedKeyLength);
+			KeySpec spec = new PBEKeySpec(PW, salt, iterCount, derivedKeyLength);
 			SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
 
 			SecretKey secretKey = f.generateSecret(spec);
@@ -59,54 +81,26 @@ public class KeyUnwrapper {
 
 			// unwrap key
 
-			if (PW.getBytes().length < 16) {
+			if (PW.length < 16) {
 				System.out.println("Password must be at least 16 characters, failed to decrypt key");
 				return;
 			} else {
 				cipher.init(cipherMode, cipherKey, cipher.getParameters());
 			}
-			FileInputStream inputStream = new FileInputStream(encryptedFile);
-			byte[] inputBytes = new byte[(int) encryptedFile.length()];
-			inputStream.read(inputBytes);
-			Key outputKey = cipher.unwrap(inputBytes, "AES", Cipher.SECRET_KEY);
+			byte[] wrappedBytes = new byte[inputBytes.length - HEADER_LENGTH];
+			System.arraycopy(inputBytes, HEADER_LENGTH, wrappedBytes, 0, wrappedBytes.length);
+			Key outputKey = cipher.unwrap(wrappedBytes, "AES", Cipher.SECRET_KEY);
 
 			byte[] outputBytes = outputKey.getEncoded();
 
 			FileOutputStream outputStream = new FileOutputStream(decryptedFile);
 			outputStream.write(outputBytes);
 
-			inputStream.close();
 			outputStream.close();
 
 		} catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IOException
 				| NoSuchProviderException | InvalidKeySpecException | InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
-		}
-	}
-
-	// test
-	private static String DATA = "6b6c315f62b0453608169c73893d8f0abe79fdf63a078d5c2bc9bdcb57fa028c";
-	private static String DATA2 = "6b6c315f62b0453608169c73893d8f0abe79fdf63a078d5c2bc9bdcb57fa0";
-	private static String KEKPW = "9fXMi5JvoHDIGQBM9fXMi5JvoHDIGQBM";
-	private static File EFile = new File("test.enc");
-	private static File DEFile = new File("test_Decrypted.txt");
-
-	public static void main(String[] args) {
-
-		try {
-			KeyUnwrapper.fileProcessor(KEKPW, EFile, DEFile);
-			FileReader inputStream = new FileReader(DEFile);
-			BufferedReader breader = new BufferedReader(inputStream);
-			String Unwrapped = breader.readLine();
-			if (Unwrapped.equals(DATA) && !Unwrapped.equals(DATA2)) {
-				System.out.println("Test Successful");
-			} else {
-				System.out.println("Test Failed");
-			}
-			breader.close();
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			ex.printStackTrace();
 		}
 	}
 
